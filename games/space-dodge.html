@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空躲避 - Space Dodge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a15;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 600px;
+            background: linear-gradient(180deg, #0a0a15 0%, #1a1a3a 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
+            cursor: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .high-score {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: white/70;
+            font-size: 14px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 42px;
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 28px;
+            color: #ff6b6b;
+            text-shadow: 0 0 20px #ff6b6b;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .btn {
+            background: linear-gradient(180deg, #00ffff 0%, #0088aa 100%);
+            color: #0a0a15;
+            border: none;
+            padding: 15px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.8);
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="score-display">得分: <span id="score">0</span></div>
+        <div class="high-score">最高: <span id="highScore">0</span></div>
+
+        <div id="startScreen" class="title">
+            <h1>🚀 SPACE DODGE</h1>
+            <p>躲避障碍物，存活越久分数越高!</p>
+            <button class="btn" id="startBtn">开始���戏</button>
+        </div>
+
+        <div id="gameOverScreen" class="title hidden">
+            <h2>GAME OVER</h2>
+            <p>最终得分: <span id="finalScore">0</span></p>
+            <button class="btn" id="restartBtn">再玩一次</button>
+        </div>
+
+        <div class="controls-hint">鼠标移动控制 | 躲避红色障碍物</div>
+
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const container = document.getElementById('gameContainer');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const W = () => canvas.width;
+        const H = () => canvas.height;
+
+        // Game state
+        let gameState = 'start'; // start, playing, gameOver
+        let score = 0;
+        let highScore = localStorage.getItem('spaceDodgeHighScore') || 0;
+        let gameTime = 0;
+
+        // Player
+        const player = {
+            x: W() / 2,
+            y: H() - 80,
+            radius: 15,
+            color: '#00ffff'
+        };
+
+        // Obstacles
+        let obstacles = [];
+        let stars = [];
+        let particles = [];
+
+        // Mouse position
+        let mouseX = W() / 2;
+        let targetX = W() / 2;
+
+        // Initialize stars background
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * W(),
+                    y: Math.random() * H(),
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 2 + 0.5,
+                    brightness: Math.random()
+                });
+            }
+        }
+
+        function initGame() {
+            score = 0;
+            gameTime = 0;
+            obstacles = [];
+            particles = [];
+            player.x = W() / 2;
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('highScore').textContent = highScore;
+
+            initStars();
+        }
+
+        // Update
+        function update() {
+            if (gameState !== 'playing') return;
+
+            gameTime++;
+
+            // Move player towards mouse
+            player.x += (targetX - player.x) * 0.15;
+
+            // Keep player in bounds
+            player.x = Math.max(player.radius, Math.min(W() - player.radius, player.x));
+
+            // Spawn obstacles
+            const spawnRate = Math.max(20, 60 - Math.floor(score / 50));
+            if (gameTime % spawnRate === 0) {
+                const type = Math.random();
+                const size = 20 + Math.random() * 30;
+
+                if (type < 0.3) {
+                    // Falling circle
+                    obstacles.push({
+                        type: 'circle',
+                        x: Math.random() * W(),
+                        y: -30,
+                        radius: size,
+                        speed: 3 + Math.random() * 3 + score / 100,
+                        angle: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.2
+                    });
+                } else if (type < 0.6) {
+                    // Falling square
+                    obstacles.push({
+                        type: 'square',
+                        x: Math.random() * W(),
+                        y: -30,
+                        size: size,
+                        speed: 4 + Math.random() * 2 + score / 100,
+                        angle: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.1
+                    });
+                } else {
+                    // Diamond
+                    obstacles.push({
+                        type: 'diamond',
+                        x: Math.random() * W(),
+                        y: -30,
+                        size: size,
+                        speed: 5 + Math.random() * 2 + score / 100,
+                        angle: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.15
+                    });
+                }
+            }
+
+            // Update obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.y += obs.speed;
+                obs.angle += obs.rotationSpeed;
+
+                // Remove off-screen
+                if (obs.y > H() + 50) {
+                    obstacles.splice(i, 1);
+                    score += 10;
+                    document.getElementById('score').textContent = score;
+                }
+
+                // Collision with player
+                const dx = player.x - obs.x;
+                const dy = player.y - obs.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < player.radius + obs.radius * 0.7) {
+                    createExplosion(player.x, player.y);
+                    gameOver();
+                }
+            }
+
+            // Update stars
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > H()) {
+                    star.y = 0;
+                    star.x = Math.random() * W();
+                }
+            });
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.alpha = p.life / 30;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function createExplosion(x, y) {
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 6;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: Math.random() > 0.5 ? '#00ffff' : '#ff6b6b',
+                    life: 30,
+                    alpha: 1
+                });
+            }
+        }
+
+        // Draw
+        function draw() {
+            // Clear
+            ctx.fillStyle = '#0a0a15';
+            ctx.fillRect(0, 0, W(), H());
+
+            // Draw stars
+            stars.forEach(star => {
+                ctx.globalAlpha = star.brightness;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            if (gameState === 'playing' || gameState === 'gameOver') {
+                // Draw player
+                ctx.save();
+                ctx.translate(player.x, player.y);
+
+                // Glow
+                ctx.shadowColor = player.color;
+                ctx.shadowBlur = 20;
+
+                ctx.fillStyle = player.color;
+                ctx.beginPath();
+                ctx.moveTo(0, -player.radius);
+                ctx.lineTo(player.radius * 0.8, player.radius * 0.5);
+                ctx.lineTo(-player.radius * 0.8, player.radius * 0.5);
+                ctx.closePath();
+                ctx.fill();
+
+                // Inner
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(0, -player.radius * 0.5);
+                ctx.lineTo(player.radius * 0.4, player.radius * 0.25);
+                ctx.lineTo(-player.radius * 0.4, player.radius * 0.25);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.restore();
+
+                // Draw obstacles
+                obstacles.forEach(obs => {
+                    ctx.save();
+                    ctx.translate(obs.x, obs.y);
+                    ctx.rotate(obs.angle);
+
+                    ctx.fillStyle = '#ff6b6b';
+                    ctx.shadowColor = '#ff6b6b';
+                    ctx.shadowBlur = 10;
+
+                    if (obs.type === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, obs.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (obs.type === 'square') {
+                        ctx.fillRect(-obs.size / 2, -obs.size / 2, obs.size, obs.size);
+                    } else {
+                        // Diamond
+                        ctx.beginPath();
+                        ctx.moveTo(0, -obs.size / 2);
+                        ctx.lineTo(obs.size / 2, 0);
+                        ctx.lineTo(0, obs.size / 2);
+                        ctx.lineTo(-obs.size / 2, 0);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
+                });
+
+                // Draw particles
+                particles.forEach(p => {
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function gameOver() {
+            gameState = 'gameOver';
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('spaceDodgeHighScore', highScore);
+            }
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            initGame();
+        }
+
+        // Event listeners
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            targetX = e.clientX - rect.left;
+        });
+
+        container.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = container.getBoundingClientRect();
+            targetX = e.touches[0].clientX - rect.left;
+        }, { passive: false });
+
+        container.addEventListener('touchstart', (e) => {
+            const rect = container.getBoundingClientRect();
+            targetX = e.touches[0].clientX - rect.left;
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') targetX -= 30;
+            if (e.key === 'ArrowRight' || e.key === 'd') targetX += 30;
+            if (e.key === ' ' && gameState !== 'playing') startGame();
+        });
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize and start
+        initStars();
+        document.getElementById('highScore').textContent = highScore;
+        draw();
+        gameLoop();
+    </script>
+</body>
+</html>

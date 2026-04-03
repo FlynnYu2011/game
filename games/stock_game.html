@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票大冒险 Stock Rush</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #1a1a2e;
+            color: #eaeaea;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            auto;
+            padding margin: 0: 10px;
+        }
+        .title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            color: #eaeaea;
+        }
+        .stock-select {
+            background: #16213e;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .stock-select span {
+            color: #eaeaea;
+            font-size: 14px;
+        }
+        .stock-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+            margin: 2px;
+        }
+        .stock-btn.active {
+            background: #4a4eff;
+        }
+        .stock-btn:hover {
+            background: #5a5eff;
+        }
+        .status-bar {
+            background: #16213e;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .cash {
+            font-size: 18px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+        .day {
+            font-size: 16px;
+            color: #eaeaea;
+        }
+        .chart-container {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            height: 300px;
+            position: relative;
+        }
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+        .price-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .stock-name {
+            font-size: 16px;
+            color: #888;
+        }
+        .price {
+            font-size: 22px;
+            font-weight: bold;
+            color: #eaeaea;
+            font-family: Consolas, monospace;
+        }
+        .price.up {
+            color: #00ff88;
+        }
+        .price.down {
+            color: #ff4757;
+        }
+        .change {
+            font-size: 16px;
+            font-family: Consolas, monospace;
+        }
+        .change.up {
+            color: #00ff88;
+        }
+        .change.down {
+            color: #ff4757;
+        }
+        .trade-panel {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .trade-section {
+            text-align: center;
+        }
+        .trade-section h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .leverage-section h3 {
+            color: #ff6b00;
+        }
+        .buy-section h3 {
+            color: #00ff88;
+        }
+        .sell-section h3 {
+            color: #ff4757;
+        }
+        .leverage-btn {
+            background: #ff6b00;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 80px;
+        }
+        .leverage-btn.active {
+            background: #ff3300;
+        }
+        .leverage-fee {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .trade-btn {
+            display: block;
+            width: 120px;
+            padding: 10px;
+            margin: 5px auto;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: white;
+            transition: background 0.3s;
+        }
+        .trade-btn:hover {
+            filter: brightness(1.1);
+        }
+        .trade-btn:disabled {
+            background: #555 !important;
+            cursor: not-allowed;
+        }
+        .btn-buy {
+            background: #4a4eff;
+        }
+        .btn-sell {
+            background: #ff4757;
+        }
+        .cooldown {
+            font-size: 11px;
+            color: #ff6b00;
+            min-height: 18px;
+            margin-bottom: 5px;
+        }
+        .position {
+            background: #16213e;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .position.up {
+            color: #00ff88;
+        }
+        .position.down {
+            color: #ff4757;
+        }
+        .panel {
+            background: #16213e;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .panel-title.blue {
+            color: #00bcd4;
+        }
+        .panel-title.red {
+            color: #ff6b6b;
+        }
+        .panel-title.pink {
+            color: #e91e63;
+        }
+        .panel-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: white;
+            transition: background 0.3s;
+        }
+        .panel-btn:hover {
+            filter: brightness(1.1);
+        }
+        .btn-upgrade {
+            background: #ff9800;
+        }
+        .btn-auto {
+            background: #9c27b0;
+        }
+        .btn-lottery {
+            background: #ff6b6b;
+        }
+        .btn-vip {
+            background: #ffd700;
+            color: black !important;
+        }
+        .btn-car {
+            background: #607d8b;
+        }
+        .btn-house {
+            background: #795548;
+        }
+        .info-label {
+            font-size: 13px;
+            color: #eaeaea;
+        }
+        .lottery-result {
+            font-size: 12px;
+            color: #ffd700;
+            min-height: 20px;
+            margin-left: 10px;
+        }
+        .control-panel {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: white;
+            background: #4a4eff;
+        }
+        .control-btn:hover {
+            background: #6c6cff;
+        }
+        .control-btn.reset {
+            background: #666;
+        }
+        .control-btn.reset:hover {
+            background: #888;
+        }
+        .volatility-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 20px;
+        }
+        .volatility-label {
+            font-size: 13px;
+            color: #eaeaea;
+        }
+        .volatility-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #333;
+            color: #666;
+        }
+        .volatility-btn.active {
+            background: #4a4eff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">股票大冒险</h1>
+
+        <div class="stock-select">
+            <span>选择股票:</span>
+            <div id="stockButtons"></div>
+        </div>
+
+        <div class="status-bar">
+            <div class="cash" id="cashDisplay">资金: ¥10,000.00</div>
+            <div class="day" id="dayDisplay">第 1 天</div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="chart"></canvas>
+        </div>
+
+        <div class="price-info">
+            <div>
+                <div class="stock-name" id="stockName">贵州茅台 (白酒)</div>
+                <div class="price" id="priceDisplay">¥1800.00</div>
+            </div>
+            <div class="change up" id="changeDisplay">+0.00%</div>
+        </div>
+
+        <div class="trade-panel">
+            <div class="trade-section leverage-section">
+                <h3>杠杆</h3>
+                <button class="leverage-btn" id="leverageBtn" onclick="toggleLeverage()">×1</button>
+                <div class="leverage-fee" id="leverageFee">费用: ¥500</div>
+            </div>
+
+            <div class="trade-section buy-section">
+                <h3>买入</h3>
+                <button class="trade-btn btn-buy" onclick="buyStock(100)">买入100股</button>
+                <button class="trade-btn btn-buy" onclick="buyStock(500)">买入500股</button>
+                <button class="trade-btn btn-buy" onclick="buyStock(0)">全部买入</button>
+            </div>
+
+            <div class="trade-section sell-section">
+                <h3>卖出</h3>
+                <div class="cooldown" id="cooldown"></div>
+                <button class="trade-btn btn-sell" id="sell100" onclick="sellStock(100)">卖出100股</button>
+                <button class="trade-btn btn-sell" id="sell500" onclick="sellStock(500)">卖出500股</button>
+                <button class="trade-btn btn-sell" id="sellAll" onclick="sellStock(0)">全部卖出</button>
+            </div>
+        </div>
+
+        <div class="position" id="positionDisplay">
+            持仓: 0股  |  成本: ¥0.00  |  盈亏: ¥0.00 (0.00%)
+        </div>
+
+        <div class="panel">
+            <span class="panel-title blue">自动打工机</span>
+            <span class="info-label" id="autoWorkCount">数量: 0台</span>
+            <button class="panel-btn btn-upgrade" id="workUpgradeBtn" onclick="upgradeWork()">升级 (¥200)</button>
+            <button class="panel-btn btn-auto" id="autoWorkBtn" onclick="buyAutoWork()">购买 (¥500)</button>
+        </div>
+
+        <div class="panel">
+            <span class="panel-title red">彩票 (¥100/张)</span>
+            <button class="panel-btn btn-lottery" onclick="buyLottery()">购买彩票</button>
+            <span class="lottery-result" id="lotteryResult"></span>
+        </div>
+
+        <div class="panel">
+            <span class="panel-title pink">消费商店</span>
+            <button class="panel-btn btn-vip" id="vipBtn" onclick="buyVip()">VIP会员 Lv.0</button>
+            <button class="panel-btn btn-car" id="carBtn" onclick="buyCar()">购车 (Lv.0)</button>
+            <button class="panel-btn btn-house" id="houseBtn" onclick="buyHouse()">买房 (Lv.0)</button>
+        </div>
+
+        <div class="control-panel">
+            <button class="control-btn" onclick="togglePause()" id="pauseBtn">暂停/继续</button>
+            <button class="control-btn reset" onclick="resetGame()">重置游戏</button>
+            <div class="volatility-control">
+                <span class="volatility-label">波动剧烈度:</span>
+                <div id="volatilityBtns"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 股票类
+        class Stock {
+            constructor(code, name, industry, basePrice, riskLevel, trendBias) {
+                this.code = code;
+                this.name = name;
+                this.industry = industry;
+                this.price = basePrice;
+                this.basePrice = basePrice;
+                this.riskLevel = riskLevel;
+                this.trendBias = trendBias;
+                this.volatility = riskLevel * 0.3;
+                this.priceHistory = [basePrice];
+                this.consecutiveUp = 0;
+                this.consecutiveDown = 0;
+                this.marketCycle = 0;
+                this.lastChange = 0;
+                this.shares = 0;
+                this.totalCost = 0;
+            }
+        }
+
+        // 游戏状态
+        let gameState = {
+            cash: 10000,
+            day: 1,
+            isRunning: true,
+            volatilityLevel: 3,
+            selectedStockIndex: 0,
+            gameSeconds: 0,
+            sellCooldown: 0,
+            sellCooldownMax: 10,
+            leverage: 1,
+            leverageOptions: [1, 2, 3, 5, 10],
+            leverageIndex: 0,
+            leverageCost: 500,
+            lotteryCost: 100,
+            lotteryLastResult: "",
+            workLevel: 1,
+            workIncome: 10,
+            workUpgradeCost: 200,
+            autoWorkCount: 0,
+            autoWorkCost: 500,
+            vipLevel: 0,
+            vipCost: 1000,
+            carLevel: 0,
+            carCost: 2000,
+            houseLevel: 0,
+            houseCost: 5000,
+            marketSentiment: 0,
+            marketCycleDays: 0
+        };
+
+        let stocks = [];
+        let gameInterval = null;
+        let canvas, ctx;
+
+        // 初始化股票
+        function initStocks() {
+            return [
+                new Stock("SH600519", "贵州茅台", "白酒", 1800, 2, 0.1),
+                new Stock("SH000001", "上证指数", "大盘指数", 3200, 3, 0.05),
+                new Stock("SZ000858", "五粮液", "白酒", 150, 2, 0.08),
+                new Stock("SH600036", "招商银行", "银行", 35, 2, 0.05),
+                new Stock("SZ300750", "宁德时代", "新能源", 200, 4, 0.15),
+                new Stock("SH601318", "中国平安", "保险", 45, 3, 0.02),
+                new Stock("SZ002475", "立讯精密", "电子", 35, 4, 0.1),
+                new Stock("SH600900", "长江电力", "电力", 22, 1, 0.03),
+                new Stock("SH688981", "中芯国际", "芯片", 45, 5, 0.12),
+                new Stock("SZ000002", "万科A", "房地产", 8, 4, -0.05),
+                new Stock("BTC", "比特币", "加密货币", 50000, 5, 0.2)
+            ];
+        }
+
+        // 初始化UI
+        function initUI() {
+            stocks = initStocks();
+            canvas = document.getElementById('chart');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+
+            // 创建股票按钮
+            const stockButtonsDiv = document.getElementById('stockButtons');
+            stockButtonsDiv.innerHTML = '';
+            stocks.forEach((stock, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'stock-btn' + (index === 0 ? ' active' : '');
+                btn.textContent = stock.name.substring(0, 4);
+                btn.onclick = () => selectStock(index);
+                stockButtonsDiv.appendChild(btn);
+            });
+
+            // 创建波动率按钮
+            const volatilityDiv = document.getElementById('volatilityBtns');
+            volatilityDiv.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'volatility-btn' + (i < gameState.volatilityLevel ? ' active' : '');
+                btn.textContent = '●';
+                btn.onclick = () => setVolatility(i + 1);
+                volatilityDiv.appendChild(btn);
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            startGame();
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth - 30;
+            canvas.height = container.clientHeight - 30;
+            drawChart();
+        }
+
+        // 绘制K线图
+        function drawChart() {
+            const currentStock = stocks[gameState.selectedStockIndex];
+            if (!currentStock.priceHistory.length) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const marginLeft = 50, marginRight = 20, marginTop = 20, marginBottom = 30;
+            const chartWidth = width - marginLeft - marginRight;
+            const chartHeight = height - marginTop - marginBottom;
+
+            // 清空画布
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(0, 0, width, height);
+
+            // 绘制网格
+            ctx.strokeStyle = '#2a2a4a';
+            ctx.setLineDash([2, 4]);
+            for (let i = 0; i <= 4; i++) {
+                const y = marginTop + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(marginLeft, y);
+                ctx.lineTo(width - marginRight, y);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            // 计算价格范围
+            let minPrice = Math.min(...currentStock.priceHistory);
+            let maxPrice = Math.max(...currentStock.priceHistory);
+            const priceRange = maxPrice - minPrice || 1;
+
+            // 绘制价格线
+            const historyLen = currentStock.priceHistory.length;
+            const points = [];
+
+            for (let i = 0; i < historyLen; i++) {
+                const x = marginLeft + (historyLen > 1 ? i / (historyLen - 1) : 0) * chartWidth;
+                const y = marginTop + chartHeight - ((currentStock.priceHistory[i] - minPrice) / priceRange) * chartHeight;
+                points.push({x, y});
+            }
+
+            // 绘制渐变填充
+            if (points.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(marginLeft, marginTop + chartHeight);
+                points.forEach(p => ctx.lineTo(p.x, p.y));
+                ctx.lineTo(points[points.length - 1].x, marginTop + chartHeight);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(42, 42, 90, 0.5)';
+                ctx.fill();
+
+                // 绘制价格线
+                for (let i = 0; i < points.length - 1; i++) {
+                    const color = currentStock.priceHistory[i + 1] >= currentStock.priceHistory[i] ? '#00ff88' : '#ff4757';
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[i + 1].x, points[i + 1].y);
+                    ctx.stroke();
+                }
+            }
+
+            // 绘制价格标签
+            ctx.fillStyle = '#888888';
+            ctx.font = '12px Consolas';
+            ctx.textAlign = 'right';
+            const prices = [maxPrice, (maxPrice + minPrice) / 2, minPrice];
+            prices.forEach((price, i) => {
+                const y = marginTop + (chartHeight / 2) * i;
+                ctx.fillText('¥' + price.toFixed(1), marginLeft - 8, y + 4);
+            });
+
+            // 绘制当前价格点
+            if (points.length > 0) {
+                const lastPoint = points[points.length - 1];
+                const firstPrice = currentStock.priceHistory[0];
+                ctx.fillStyle = currentStock.price >= firstPrice ? '#00ff88' : '#ff4757';
+                ctx.beginPath();
+                ctx.arc(lastPoint.x, lastPoint.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // 选择股票
+        function selectStock(index) {
+            gameState.selectedStockIndex = index;
+            const currentStock = stocks[index];
+
+            document.querySelectorAll('.stock-btn').forEach((btn, i) => {
+                btn.className = 'stock-btn' + (i === index ? ' active' : '');
+                if (stocks[i].shares > 0) {
+                    btn.textContent = stocks[i].name.substring(0, 4) + '(' + stocks[i].shares + ')';
+                } else {
+                    btn.textContent = stocks[i].name.substring(0, 4);
+                }
+            });
+
+            document.getElementById('stockName').textContent = currentStock.name + ' (' + currentStock.industry + ')';
+            updateUI();
+            drawChart();
+        }
+
+        // 设置波动率
+        function setVolatility(level) {
+            gameState.volatilityLevel = level;
+            document.querySelectorAll('.volatility-btn').forEach((btn, i) => {
+                btn.className = 'volatility-btn' + (i < level ? ' active' : '');
+            });
+        }
+
+        // 切换杠杆
+        function toggleLeverage() {
+            const oldLeverage = gameState.leverage;
+            gameState.leverageIndex = (gameState.leverageIndex + 1) % gameState.leverageOptions.length;
+            const newLeverage = gameState.leverageOptions[gameState.leverageIndex];
+
+            if (oldLeverage === 1 && newLeverage > 1) {
+                if (gameState.cash >= gameState.leverageCost) {
+                    gameState.cash -= gameState.leverageCost;
+                    gameState.leverage = newLeverage;
+                } else {
+                    gameState.leverageIndex = (gameState.leverageIndex - 1 + gameState.leverageOptions.length) % gameState.leverageOptions.length;
+                    document.getElementById('leverageFee').style.color = '#ff4757';
+                    document.getElementById('leverageFee').textContent = '费用不足 ¥' + gameState.leverageCost;
+                    setTimeout(() => {
+                        document.getElementById('leverageFee').style.color = '#888';
+                        document.getElementById('leverageFee').textContent = '费用: ¥' + gameState.leverageCost;
+                    }, 1000);
+                    return;
+                }
+            } else {
+                gameState.leverage = newLeverage;
+            }
+
+            const btn = document.getElementById('leverageBtn');
+            btn.textContent = '×' + gameState.leverage;
+            btn.className = 'leverage-btn' + (gameState.leverage > 1 ? ' active' : '');
+            document.getElementById('leverageFee').textContent = '费用: ¥' + gameState.leverageCost;
+            updateUI();
+        }
+
+        // 买入股票
+        function buyStock(amount) {
+            const currentStock = stocks[gameState.selectedStockIndex];
+            if (amount === 0) {
+                amount = Math.floor(gameState.cash / (currentStock.price * gameState.leverage));
+            }
+            if (amount <= 0) return;
+
+            let cost = amount * currentStock.price * gameState.leverage;
+            if (cost > gameState.cash) {
+                amount = Math.floor(gameState.cash / (currentStock.price * gameState.leverage));
+                cost = amount * currentStock.price * gameState.leverage;
+            }
+
+            if (amount > 0) {
+                gameState.cash -= cost;
+                currentStock.shares += amount * gameState.leverage;
+                currentStock.totalCost += cost;
+
+                if (gameState.leverage > 1) {
+                    gameState.cash -= gameState.leverageCost;
+                }
+
+                gameState.sellCooldown = gameState.sellCooldownMax;
+                updateSellButton();
+                updateUI();
+                drawChart();
+            }
+        }
+
+        // 卖出股票
+        function sellStock(amount) {
+            if (gameState.sellCooldown > 0) return;
+
+            const currentStock = stocks[gameState.selectedStockIndex];
+            if (amount === 0 || amount > currentStock.shares) {
+                amount = currentStock.shares;
+            }
+            if (amount <= 0) return;
+
+            const revenue = amount * currentStock.price;
+            gameState.cash += revenue;
+            currentStock.shares -= amount;
+
+            if (currentStock.shares > 0) {
+                const avgCost = currentStock.totalCost / (currentStock.shares + amount);
+                currentStock.totalCost = avgCost * currentStock.shares;
+            } else {
+                currentStock.totalCost = 0;
+            }
+
+            updateUI();
+            drawChart();
+        }
+
+        // 更新卖出按钮
+        function updateSellButton() {
+            const btns = ['sell100', 'sell500', 'sellAll'];
+            const cooldownEl = document.getElementById('cooldown');
+
+            if (gameState.sellCooldown > 0) {
+                btns.forEach(id => document.getElementById(id).disabled = true);
+                cooldownEl.textContent = '冷却中: ' + gameState.sellCooldown + '秒';
+            } else {
+                btns.forEach(id => document.getElementById(id).disabled = false);
+                cooldownEl.textContent = '';
+            }
+        }
+
+        // 打工升级
+        function upgradeWork() {
+            if (gameState.cash >= gameState.workUpgradeCost) {
+                gameState.cash -= gameState.workUpgradeCost;
+                gameState.workLevel++;
+                gameState.workIncome = 10 * gameState.workLevel;
+                gameState.workUpgradeCost = Math.floor(gameState.workUpgradeCost * 1.5);
+                document.getElementById('workUpgradeBtn').textContent = '升级 (¥' + gameState.workUpgradeCost + ')';
+                updateUI();
+            }
+        }
+
+        // 购买自动打工机
+        function buyAutoWork() {
+            if (gameState.cash >= gameState.autoWorkCost) {
+                gameState.cash -= gameState.autoWorkCost;
+                gameState.autoWorkCount++;
+                gameState.autoWorkCost = Math.floor(gameState.autoWorkCost * 1.3);
+                document.getElementById('autoWorkCount').textContent = '数量: ' + gameState.autoWorkCount + '台';
+                document.getElementById('autoWorkBtn').textContent = '购买 (¥' + gameState.autoWorkCost + ')';
+                updateUI();
+            }
+        }
+
+        // 购买彩票
+        function buyLottery() {
+            if (gameState.cash < gameState.lotteryCost) {
+                document.getElementById('lotteryResult').textContent = '资金不足!';
+                document.getElementById('lotteryResult').style.color = '#ff4757';
+                return;
+            }
+
+            gameState.cash -= gameState.lotteryCost;
+
+            const rand = Math.random();
+            let prize = 0, result = '', color = '#888';
+
+            if (rand < 0.01) {
+                prize = 10000;
+                result = '恭喜! 中大奖 ¥' + prize + '!';
+                color = '#00ff88';
+            } else if (rand < 0.05) {
+                prize = 500;
+                result = '中奖! ¥' + prize;
+                color = '#00ff88';
+            } else if (rand < 0.15) {
+                prize = 150;
+                result = '安慰奖 ¥' + prize;
+                color = '#ffd700';
+            } else {
+                prize = 0;
+                result = '谢谢参与';
+                color = '#888';
+            }
+
+            gameState.cash += prize;
+            const resultEl = document.getElementById('lotteryResult');
+            resultEl.textContent = result;
+            resultEl.style.color = color;
+
+            setTimeout(() => resultEl.textContent = '', 3000);
+            updateUI();
+        }
+
+        // 购买VIP
+        function buyVip() {
+            const cost = gameState.vipCost * (gameState.vipLevel + 1);
+            if (gameState.cash >= cost) {
+                gameState.cash -= cost;
+                gameState.vipLevel++;
+                document.getElementById('vipBtn').textContent = 'VIP会员 Lv.' + gameState.vipLevel;
+                updateUI();
+            }
+        }
+
+        // 购车
+        function buyCar() {
+            if (gameState.cash >= gameState.carCost) {
+                gameState.cash -= gameState.carCost;
+                gameState.carLevel++;
+                gameState.carCost = Math.floor(gameState.carCost * 1.5);
+                document.getElementById('carBtn').textContent = '购车 (Lv.' + gameState.carLevel + ')';
+                updateUI();
+            }
+        }
+
+        // 买房
+        function buyHouse() {
+            if (gameState.cash >= gameState.houseCost) {
+                gameState.cash -= gameState.houseCost;
+                gameState.houseLevel++;
+                gameState.houseCost = Math.floor(gameState.houseCost * 1.8);
+                document.getElementById('houseBtn').textContent = '买房 (Lv.' + gameState.houseLevel + ')';
+                updateUI();
+            }
+        }
+
+        // 更新市场情绪
+        function updateMarketSentiment() {
+            gameState.marketCycleDays++;
+
+            if (gameState.marketCycleDays > Math.floor(Math.random() * 30) + 30) {
+                gameState.marketCycleDays = 0;
+                if (Math.random() < 0.3) {
+                    gameState.marketCycle = Math.random() < 0.3 ? (Math.random() < 0.5 ? -1 : 1) : 0;
+                }
+            }
+
+            gameState.marketSentiment += Math.random() * 0.1 - 0.05;
+            gameState.marketSentiment = Math.max(-1, Math.min(1, gameState.marketSentiment));
+        }
+
+        // 更新股票价格
+        function updatePriceRealistic(stock) {
+            const volatilityMultiplier = gameState.volatilityLevel / 3;
+            let baseVolatility = stock.volatility * volatilityMultiplier;
+
+            if (stock.code === "BTC") {
+                baseVolatility *= 3;
+            }
+
+            const blackSwanChance = stock.code === "BTC" ? 0.03 : 0.01;
+
+            let trendFactor = 0;
+            if (stock.consecutiveUp >= 2) {
+                trendFactor = baseVolatility * 0.5;
+            } else if (stock.consecutiveDown >= 2) {
+                trendFactor = -baseVolatility * 0.5;
+            }
+
+            let volatilityClustering = 0;
+            if (Math.abs(stock.lastChange) > baseVolatility * 3) {
+                volatilityClustering = stock.lastChange * 0.3;
+            }
+
+            const deviation = (stock.price - stock.basePrice) / stock.basePrice;
+            const meanReversion = -deviation * baseVolatility * 2;
+
+            const marketCycleImpact = gameState.marketCycle * baseVolatility * 0.5;
+            const sentimentImpact = gameState.marketSentiment * baseVolatility * 0.3;
+            const trendBiasImpact = stock.trendBias * baseVolatility * 0.3;
+
+            let blackSwan = 0;
+            if (Math.random() < blackSwanChance) {
+                blackSwan = (Math.random() < 0.5 ? -1 : 1) * baseVolatility * (Math.random() * 5 + 5);
+                gameState.marketSentiment += blackSwan * 0.1;
+                gameState.marketSentiment = Math.max(-1, Math.min(1, gameState.marketSentiment));
+            }
+
+            let changePercent = (
+                Math.random() * baseVolatility * 2 - baseVolatility +
+                trendFactor +
+                volatilityClustering +
+                meanReversion +
+                marketCycleImpact +
+                sentimentImpact +
+                trendBiasImpact +
+                blackSwan
+            );
+
+            changePercent = Math.max(-15, Math.min(15, changePercent));
+            stock.price = Math.max(1, stock.price * (1 + changePercent / 100));
+            stock.priceHistory.push(stock.price);
+
+            if (changePercent > 0.5) {
+                stock.consecutiveUp++;
+                stock.consecutiveDown = 0;
+            } else if (changePercent < -0.5) {
+                stock.consecutiveDown++;
+                stock.consecutiveUp = 0;
+            } else {
+                stock.consecutiveUp = Math.max(0, stock.consecutiveUp - 1);
+                stock.consecutiveDown = Math.max(0, stock.consecutiveDown - 1);
+            }
+
+            stock.lastChange = changePercent;
+
+            if (stock.priceHistory.length > 200) {
+                stock.priceHistory = stock.priceHistory.slice(-200);
+            }
+        }
+
+        // 更新所有股票价格
+        function updatePrice() {
+            updateMarketSentiment();
+            stocks.forEach(stock => updatePriceRealistic(stock));
+        }
+
+        // 计算涨跌
+        function calculateChange() {
+            const currentStock = stocks[gameState.selectedStockIndex];
+            if (currentStock.priceHistory.length > 1) {
+                const oldPrice = currentStock.priceHistory[currentStock.priceHistory.length - 2];
+                return (currentStock.price - oldPrice) / oldPrice * 100;
+            }
+            return 0;
+        }
+
+        // 更新UI
+        function updateUI() {
+            const currentStock = stocks[gameState.selectedStockIndex];
+
+            document.getElementById('cashDisplay').textContent = '资金: ¥' + gameState.cash.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('dayDisplay').textContent = '第 ' + gameState.day + ' 天';
+
+            const priceEl = document.getElementById('priceDisplay');
+            priceEl.textContent = '¥' + currentStock.price.toFixed(2);
+
+            const change = calculateChange();
+            const changeEl = document.getElementById('changeDisplay');
+            if (change >= 0) {
+                changeEl.textContent = '+' + change.toFixed(2) + '%';
+                changeEl.className = 'change up';
+                priceEl.className = 'price up';
+            } else {
+                changeEl.textContent = change.toFixed(2) + '%';
+                changeEl.className = 'change down';
+                priceEl.className = 'price down';
+            }
+
+            // 持仓信息
+            const positionEl = document.getElementById('positionDisplay');
+            if (currentStock.shares > 0) {
+                const currentValue = currentStock.shares * currentStock.price;
+                const profit = currentValue - currentStock.totalCost;
+                const profitPercent = currentStock.totalCost > 0 ? (profit / currentStock.totalCost * 100) : 0;
+
+                if (profit >= 0) {
+                    positionEl.textContent = '持仓: ' + currentStock.shares + '股  |  成本: ¥' + currentStock.totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '  |  盈亏: +¥' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' (+' + profitPercent.toFixed(2) + '%)';
+                    positionEl.className = 'position up';
+                } else {
+                    positionEl.textContent = '持仓: ' + currentStock.shares + '股  |  成本: ¥' + currentStock.totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '  |  盈亏: -¥' + Math.abs(profit).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' (' + profitPercent.toFixed(2) + '%)';
+                    positionEl.className = 'position down';
+                }
+            } else {
+                positionEl.textContent = '持仓: 0股  |  成本: ¥0.00  |  盈亏: ¥0.00 (0.00%)';
+                positionEl.className = 'position';
+            }
+        }
+
+        // 切换暂停
+        function togglePause() {
+            gameState.isRunning = !gameState.isRunning;
+            document.getElementById('pauseBtn').textContent = gameState.isRunning ? '暂停/继续' : '继续';
+        }
+
+        // 重置游戏
+        function resetGame() {
+            gameState = {
+                cash: 10000,
+                day: 1,
+                isRunning: true,
+                volatilityLevel: 3,
+                selectedStockIndex: 0,
+                gameSeconds: 0,
+                sellCooldown: 0,
+                sellCooldownMax: 10,
+                leverage: 1,
+                leverageOptions: [1, 2, 3, 5, 10],
+                leverageIndex: 0,
+                leverageCost: 500,
+                lotteryCost: 100,
+                lotteryLastResult: "",
+                workLevel: 1,
+                workIncome: 10,
+                workUpgradeCost: 200,
+                autoWorkCount: 0,
+                autoWorkCost: 500,
+                vipLevel: 0,
+                vipCost: 1000,
+                carLevel: 0,
+                carCost: 2000,
+                houseLevel: 0,
+                houseCost: 5000,
+                marketSentiment: 0,
+                marketCycleDays: 0
+            };
+
+            stocks = initStocks();
+
+            document.getElementById('leverageBtn').textContent = '×1';
+            document.getElementById('leverageBtn').className = 'leverage-btn';
+            document.getElementById('leverageFee').textContent = '费用: ¥500';
+            document.getElementById('autoWorkCount').textContent = '数量: 0台';
+            document.getElementById('workUpgradeBtn').textContent = '升级 (¥200)';
+            document.getElementById('autoWorkBtn').textContent = '购买 (¥500)';
+            document.getElementById('vipBtn').textContent = 'VIP会员 Lv.0';
+            document.getElementById('carBtn').textContent = '购车 (Lv.0)';
+            document.getElementById('houseBtn').textContent = '买房 (Lv.0)';
+            document.getElementById('lotteryResult').textContent = '';
+            document.getElementById('pauseBtn').textContent = '暂停/继续';
+
+            document.querySelectorAll('.stock-btn').forEach((btn, i) => {
+                btn.className = 'stock-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = stocks[i].name.substring(0, 4);
+            });
+
+            setVolatility(3);
+            selectStock(0);
+        }
+
+        // 游戏主循环
+        function gameLoop() {
+            if (gameState.isRunning) {
+                gameState.gameSeconds++;
+
+                if (gameState.gameSeconds % 10 === 0) {
+                    gameState.day++;
+                }
+
+                if (gameState.sellCooldown > 0) {
+                    gameState.sellCooldown--;
+                    updateSellButton();
+                }
+
+                if (gameState.autoWorkCount > 0) {
+                    let autoIncome = gameState.autoWorkCount * gameState.workIncome;
+                    const bonusMultiplier = 1 + gameState.vipLevel * 0.2 + gameState.carLevel * 0.1 + gameState.houseLevel * 0.15;
+                    autoIncome = autoIncome * bonusMultiplier;
+                    gameState.cash += Math.floor(autoIncome);
+                }
+
+                updatePrice();
+                updateUI();
+                drawChart();
+            }
+        }
+
+        // 开始游戏
+        function startGame() {
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, 1000);
+        }
+
+        // 页面加载完成后初始化
+        window.onload = initUI;
+    </script>
+</body>
+</html>

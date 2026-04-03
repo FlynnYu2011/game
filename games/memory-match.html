@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记忆翻牌</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+  }
+  h1 { font-size: 2rem; margin-bottom: 10px; color: #e94560; text-shadow: 0 0 20px #e94560; }
+  .stats {
+    display: flex; gap: 30px; margin-bottom: 20px; font-size: 1.1rem;
+  }
+  .stats span { color: #eee; }
+  .stats .val { color: #0f9bff; font-weight: bold; }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(4, 90px);
+    gap: 12px;
+    perspective: 800px;
+  }
+  .card {
+    width: 90px; height: 90px;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.4s;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .card.matched { transform: rotateY(180deg); pointer-events: none; }
+  .card-face {
+    position: absolute; inset: 0;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem;
+  }
+  .card-back {
+    background: linear-gradient(135deg, #16213e, #0f3460);
+    border: 2px solid #e94560;
+    box-shadow: 0 0 15px rgba(233,69,96,0.3);
+  }
+  .card-back::after {
+    content: '?'; font-size: 2rem; color: #e94560;
+  }
+  .card-front {
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border: 2px solid #0f9bff;
+    transform: rotateY(180deg);
+    box-shadow: 0 0 15px rgba(15,155,255,0.3);
+  }
+  .card.matched .card-front {
+    border-color: #0f0;
+    box-shadow: 0 0 20px rgba(0,255,0,0.5);
+  }
+  #msg {
+    margin-top: 20px; font-size: 1.2rem; min-height: 30px;
+    color: #0f9bff;
+  }
+  #win {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; gap: 15px;
+    z-index: 10;
+  }
+  #win.show { display: flex; }
+  #win h2 { font-size: 2.5rem; color: #0f9bff; text-shadow: 0 0 30px #0f9bff; }
+  #win p { font-size: 1.2rem; color: #eee; }
+  #win button {
+    padding: 12px 30px; font-size: 1rem;
+    background: #e94560; color: #fff; border: none;
+    border-radius: 8px; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #win button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #e94560;
+  }
+</style>
+</head>
+<body>
+  <h1>🧠 记忆翻牌</h1>
+  <div class="stats">
+    <span>步数: <span class="val" id="steps">0</span></span>
+    <span>用时: <span class="val" id="timer">0s</span></span>
+    <span>配对: <span class="val" id="pairs">0/8</span></span>
+  </div>
+  <div id="grid"></div>
+  <div id="msg"></div>
+  <div id="win">
+    <h2>🎉 全部找到!</h2>
+    <p id="win-stats"></p>
+    <button onclick="init()">再来一局</button>
+  </div>
+
+<script>
+const EMOJIS = ['🍎','🍌','🍇','🍓','🍒','🥝','🍍','🌟'];
+let cards = [], flipped = [], matched = 0, steps = 0, startTime = 0, locked = false;
+
+function init() {
+  document.getElementById('win').classList.remove('show');
+  cards = [...EMOJIS, ...EMOJIS].sort(() => Math.random() - 0.5);
+  flipped = []; matched = 0; steps = 0; locked = false; startTime = Date.now();
+  updateStats();
+  render();
+  document.getElementById('msg').textContent = '';
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  cards.forEach((e, i) => {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = `<div class="card-face card-back"></div><div class="card-face card-front">${e}</div>`;
+    c.addEventListener('click', () => flip(i, c));
+    grid.appendChild(c);
+  });
+}
+
+function flip(i, el) {
+  if (locked || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+  el.classList.add('flipped');
+  flipped.push({ i, el });
+  if (flipped.length === 2) {
+    steps++;
+    updateStats();
+    locked = true;
+    const [a, b] = flipped;
+    if (cards[a.i] === cards[b.i]) {
+      setTimeout(() => {
+        a.el.classList.add('matched');
+        b.el.classList.add('matched');
+        matched++;
+        updateStats();
+        flipped = []; locked = false;
+        if (matched === 8) setTimeout(showWin, 400);
+      }, 400);
+    } else {
+      setTimeout(() => {
+        a.el.classList.remove('flipped');
+        b.el.classList.remove('flipped');
+        flipped = []; locked = false;
+      }, 800);
+    }
+  }
+}
+
+function updateStats() {
+  document.getElementById('steps').textContent = steps;
+  document.getElementById('pairs').textContent = `${matched}/8`;
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  document.getElementById('timer').textContent = elapsed + 's';
+}
+
+function showWin() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  document.getElementById('win-stats').textContent = `步数: ${steps} | 用时: ${elapsed}s`;
+  document.getElementById('win').classList.add('show');
+}
+
+setInterval(updateStats, 1000);
+init();
+</script>
+</body>
+</html>

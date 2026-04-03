@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企鹅跳跃 - Penguin Jump</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 600px;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8E8 50%, #B8E8F8 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .snow {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: snowFall linear infinite;
+        }
+
+        @keyframes snowFall {
+            0% { transform: translateY(-10px); }
+            100% { transform: translateY(610px); }
+        }
+
+        .player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            transition: transform 0.1s;
+        }
+
+        .player-body {
+            width: 40px;
+            height: 40px;
+            background: #2d2d2d;
+            border-radius: 50% 50% 45% 45%;
+            position: absolute;
+            left: 5px;
+            top: 5px;
+        }
+
+        .player-belly {
+            width: 30px;
+            height: 25px;
+            background: white;
+            border-radius: 50% 50% 45% 45%;
+            position: absolute;
+            left: 5px;
+            top: 15px;
+        }
+
+        .player-eye {
+            width: 8px;
+            height: 8px;
+            background: #2d2d2d;
+            border-radius: 50%;
+            position: absolute;
+            top: 12px;
+        }
+
+        .player-eye.left { left: 10px; }
+        .player-eye.right { left: 22px; }
+
+        .player-beak {
+            width: 12px;
+            height: 8px;
+            background: #FFA500;
+            border-radius: 50%;
+            position: absolute;
+            left: 14px;
+            top: 20px;
+        }
+
+        .player-wing {
+            width: 12px;
+            height: 20px;
+            background: #2d2d2d;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+        }
+
+        .player-wing.left { left: -5px; }
+        .player-wing.right { left: 33px; }
+
+        .player.flip {
+            transform: scaleX(-1);
+        }
+
+        .platform {
+            position: absolute;
+            height: 25px;
+            background: linear-gradient(180deg, #8B4513 0%, #654321 100%);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .platform::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #90EE90 0%, #32CD32 50%, #228B22 100%);
+            border-radius: 5px 5px 0 0;
+        }
+
+        .score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .high-score {
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            font-size: 14px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .start screen, .game-over {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        .game-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(180deg, #FFA500 0%, #FF8C00 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255,165,0,0.5);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(255,165,0,0.7);
+        }
+
+        .instructions {
+            color: white;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="score">得分: <span id="score">0</span></div>
+        <div class="high-score">最高: <span id="highScore">0</span></div>
+
+        <div id="startScreen" class="start">
+            <div class="game-title">🐧 企鹅跳跃</div>
+            <button class="btn" id="startBtn">开始游戏</button>
+            <div class="instructions">
+                <p>点击屏幕或按空格键跳跃</p>
+                <p>踩到更高的地方得分!</p>
+            </div>
+        </div>
+
+        <div id="gameOver" class="hidden">
+            <div class="game-title">游戏结束!</div>
+            <div class="game-title" style="font-size: 24px;">得分: <span id="finalScore">0</span></div>
+            <button class="btn" id="restartBtn">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('gameContainer');
+        const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('highScore');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOver');
+
+        // Game state
+        let gameState = 'start'; // start, playing, gameOver
+        let score = 0;
+        let highScore = localStorage.getItem('penguinJumpHighScore') || 0;
+        let cameraY = 0;
+        let lastPlatformY = 500;
+
+        // Player
+        const player = {
+            x: 175,
+            y: 400,
+            vx: 0,
+            vy: 0,
+            width: 50,
+            height: 50,
+            onGround: false
+        };
+
+        // Physics
+        const GRAVITY = 0.8;
+        const JUMP_FORCE = -15;
+        const MOVE_SPEED = 6;
+
+        // Platforms
+        let platforms = [];
+
+        // Snow particles
+        let snowflakes = [];
+
+        // Input
+        let keys = { left: false, right: false, jump: false };
+
+        // Initialize
+        highScoreDisplay.textContent = highScore;
+
+        function initGame() {
+            score = 0;
+            cameraY = 0;
+            lastPlatformY = 500;
+
+            player.x = 175;
+            player.y = 400;
+            player.vx = 0;
+            player.vy = 0;
+
+            platforms = [
+                { x: 0, y: 550, width: 400, height: 50, scored: true }
+            ];
+
+            // Generate initial platforms
+            for (let i = 0; i < 10; i++) {
+                lastPlatformY -= 80 + Math.random() * 40;
+                platforms.push(generatePlatform(lastPlatformY));
+            }
+
+            // Create snow
+            snowflakes = [];
+            for (let i = 0; i < 30; i++) {
+                createSnowflake();
+            }
+
+            scoreDisplay.textContent = score;
+        }
+
+        function generatePlatform(y) {
+            const width = 80 + Math.random() * 100;
+            return {
+                x: Math.random() * (400 - width),
+                y: y,
+                width: width,
+                height: 25,
+                scored: false
+            };
+        }
+
+        function createSnowflake() {
+            snowflakes.push({
+                x: Math.random() * 400,
+                y: -10,
+                size: 2 + Math.random() * 4,
+                speed: 2 + Math.random() * 3
+            });
+        }
+
+        function updateSnowflakes() {
+            const container = document.getElementById('gameContainer');
+
+            snowflakes.forEach(flake => {
+                let el = document.getElementById(`snow-${flake.id}`);
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = `snow-${flake.id}`;
+                    el.className = 'snow';
+                    container.appendChild(el);
+                }
+
+                flake.y += flake.speed;
+                if (flake.y > 610) {
+                    flake.y = -10;
+                    flake.x = Math.random() * 400;
+                }
+
+                el.style.left = flake.x + 'px';
+                el.style.top = flake.y + 'px';
+                el.style.width = flake.size + 'px';
+                el.style.height = flake.size + 'px';
+            });
+        }
+
+        function update() {
+            if (gameState !== 'playing') return;
+
+            // Horizontal movement
+            if (keys.left) player.vx = -MOVE_SPEED;
+            else if (keys.right) player.vx = MOVE_SPEED;
+            else player.vx *= 0.8;
+
+            // Apply gravity
+            player.vy += GRAVITY;
+
+            // Apply velocity
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // Wall collision
+            if (player.x < 0) player.x = 0;
+            if (player.x > 400 - player.width) player.x = 400 - player.width;
+
+            // Platform collision
+            player.onGround = false;
+            platforms.forEach(platform => {
+                if (player.vy > 0 &&
+                    player.x + player.width > platform.x &&
+                    player.x < platform.x + platform.width &&
+                    player.y + player.height > platform.y &&
+                    player.y + player.height < platform.y + platform.height + player.vy) {
+
+                    player.y = platform.y - player.height;
+                    player.vy = 0;
+                    player.onGround = true;
+
+                    if (!platform.scored) {
+                        platform.scored = true;
+                        score++;
+                        scoreDisplay.textContent = score;
+                    }
+                }
+            });
+
+            // Camera follow
+            const targetCameraY = player.y - 300;
+            if (targetCameraY < cameraY) {
+                cameraY = targetCameraY;
+            }
+
+            // Generate new platforms
+            while (lastPlatformY > cameraY - 200) {
+                lastPlatformY -= 80 + Math.random() * 40;
+                platforms.push(generatePlatform(lastPlatformY));
+            }
+
+            // Remove old platforms
+            platforms = platforms.filter(p => p.y < cameraY + 700);
+
+            // Game over check
+            if (player.y > cameraY + 650) {
+                endGame();
+            }
+
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('gameContainer');
+
+            // Clear previous frame elements
+            container.querySelectorAll('.player, .platform').forEach(el => el.remove());
+
+            // Render player
+            const playerEl = document.createElement('div');
+            playerEl.className = 'player' + (player.vx < 0 ? ' flip' : '');
+            playerEl.style.left = player.x + 'px';
+            playerEl.style.top = (player.y - cameraY) + 'px';
+
+            const direction = player.vx < 0 ? -1 : 1;
+            playerEl.innerHTML = `
+                <div class="player-wing left" style="transform: rotate(${keys.jjump ? 30 : 0}deg)"></div>
+                <div class="player-wing right" style="transform: rotate(${keys.jjump ? -30 : 0}deg)"></div>
+                <div class="player-body"></div>
+                <div class="player-belly"></div>
+                <div class="player-eye left"></div>
+                <div class="player-eye right"></div>
+                <div class="player-beak"></div>
+            `;
+            container.appendChild(playerEl);
+
+            // Render platforms
+            platforms.forEach(platform => {
+                const el = document.createElement('div');
+                el.className = 'platform';
+                el.style.left = platform.x + 'px';
+                el.style.top = (platform.y - cameraY) + 'px';
+                el.style.width = platform.width + 'px';
+                container.appendChild(el);
+            });
+
+            // Update snow
+            updateSnowflakes();
+        }
+
+        function jump() {
+            if (player.onGround) {
+                player.vy = JUMP_FORCE;
+                player.onGround = false;
+            }
+        }
+
+        function endGame() {
+            gameState = 'gameOver';
+            finalScoreDisplay.textContent = score;
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('penguinJumpHighScore', highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            initGame();
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+            if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && gameState === 'playing') {
+                jump();
+                e.preventDefault();
+            }
+            if (e.key === ' ' && (gameState === 'start' || gameState === 'gameOver')) {
+                startGame();
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+        });
+
+        container.addEventListener('mousedown', (e) => {
+            if (gameState === 'playing') {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+
+                if (x < rect.width / 2) {
+                    keys.left = true;
+                } else {
+                    keys.right = true;
+                }
+            }
+        });
+
+        container.addEventListener('mouseup', () => {
+            keys.left = false;
+            keys.right = false;
+        });
+
+        container.addEventListener('click', () => {
+            if (gameState === 'playing') {
+                jump();
+            }
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+
+        // Initialize snowflake IDs
+        let snowId = 0;
+        createSnowflake = function() {
+            snowflakes.push({
+                id: snowId++,
+                x: Math.random() * 400,
+                y: -10,
+                size: 2 + Math.random() * 4,
+                speed: 2 + Math.random() * 3
+            });
+        };
+
+        // Game loop
+        function gameLoop() {
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start
+        initGame();
+        render();
+        gameLoop();
+    </script>
+</body>
+</html>

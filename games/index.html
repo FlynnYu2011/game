@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayHub - 游戏集合</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gaming: {
+                            dark: '#0a0a1a',
+                            purple: '#8b5cf6',
+                            pink: '#ec4899',
+                            cyan: '#06b6d4',
+                            orange: '#f97316'
+                        }
+                    },
+                    fontFamily: {
+                        game: ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(135deg, #1a1a2e, #2d2d4a);
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4, #f97316);
+            z-index: -1;
+            animation: borderRotate 3s linear infinite;
+        }
+
+        @keyframes borderRotate {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .glow-text {
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+        }
+
+        .game-frame {
+            border: 3px solid #8b5cf6;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .category-btn {
+            transition: all 0.3s ease;
+        }
+
+        .category-btn.active {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+        }
+
+        .search-input {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-gaming-dark min-h-screen text-white">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-gaming-dark/95 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-4xl">🎮</div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-gaming-purple via-gaming-pink to-gaming-cyan bg-clip-text text-transparent">
+                    PlayHub
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="搜索游戏..."
+                        class="search-input pl-10 pr-4 py-2 rounded-full text-white placeholder-white/50 w-64">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">🔍</span>
+                </div>
+                <button id="randomGameBtn" class="bg-gradient-to-r from-gaming-purple to-gaming-pink px-4 py-2 rounded-full font-semibold hover:opacity-90 transition">
+                    🎲 随机游戏
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="gradient-border rounded-2xl p-8 md:p-12 text-center">
+                <h2 class="text-4xl md:text-6xl font-bold mb-4">
+                    畅玩 <span class="bg-gradient-to-r from-gaming-purple via-gaming-pink to-gaming-cyan bg-clip-text text-transparent">经典游戏</span>
+                </h2>
+                <p class="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
+                    精选热门网页游戏，涵盖街机、动作、益智等多种类型
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <span class="px-4 py-2 bg-white/10 rounded-full text-sm">🎯 贪吃蛇</span>
+                    <span class="px-4 py-2 bg-white/10 rounded-full text-sm">✈️ 飞机大战</span>
+                    <span class="px-4 py-2 bg-white/10 rounded-full text-sm">👊 格斗游戏</span>
+                    <span class="px-4 py-2 bg-white/10 rounded-full text-sm">🎵 音乐游戏</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="py-8 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-wrap gap-3 justify-center" id="categories">
+                <button class="category-btn active px-6 py-2 rounded-full bg-white/10" data-category="all">全部</button>
+                <button class="category-btn px-6 py-2 rounded-full bg-white/10" data-category="arcade">街机</button>
+                <button class="category-btn px-6 py-2 rounded-full bg-white/10" data-category="action">动作</button>
+                <button class="category-btn px-6 py-2 rounded-full bg-white/10" data-category="puzzle">益智</button>
+                <button class="category-btn px-6 py-2 rounded-full bg-white/10" data-category="music">音乐</button>
+                <button class="category-btn px-6 py-2 rounded-full bg-white/10" data-category="shooter">射击</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Games Grid -->
+    <section class="py-8 px-4 pb-16">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="gamesGrid">
+                <!-- Games will be inserted here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="fixed inset-0 bg-black/90 z-50 hidden">
+        <div class="h-full flex items-center justify-center p-4">
+            <div class="w-full max-w-5xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="modalTitle" class="text-xl font-bold"></h3>
+                    <button id="closeModal" class="text-3xl hover:text-gaming-pink transition">&times;</button>
+                </div>
+                <div class="game-frame bg-black">
+                    <iframe id="gameFrame" class="w-full aspect-video" frameborder="0"></iframe>
+                </div>
+                <div class="mt-4 flex gap-4">
+                    <button id="fullscreenBtn" class="bg-gaming-purple px-6 py-2 rounded-full hover:opacity-90 transition">
+                        ⛶ 全屏
+                    </button>
+                    <button id="restartGameBtn" class="bg-gaming-pink px-6 py-2 rounded-full hover:opacity-90 transition">
+                        🔄 重新开始
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-black/50 py-8 px-4">
+        <div class="max-w-7xl mx-auto text-center text-white/50">
+            <p>© 2024 PlayHub. All games are free to play.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Game data
+        const games = [
+            {
+                id: 'snake',
+                title: '进阶版贪吃蛇',
+                category: 'arcade',
+                emoji: '🐍',
+                description: '经典贪吃蛇游戏，色彩绚丽',
+                color: '#22c55e',
+                url: 'snake-game.html'
+            },
+            {
+                id: 'plane-war',
+                title: '复古飞机大战',
+                category: 'shooter',
+                emoji: '✈️',
+                description: '驾驶战机，击败敌人',
+                color: '#06b6d4',
+                url: 'plane-war.html'
+            },
+            {
+                id: 'fighter',
+                title: '街机格斗',
+                category: 'action',
+                emoji: '👊',
+                description: '双人对战格斗游戏',
+                color: '#f97316',
+                url: 'fight_game.html'
+            },
+            {
+                id: 'roguelike',
+                title: '卡通射击肉鸽',
+                category: 'shooter',
+                emoji: '🔫',
+                description: '随机关卡射击游戏',
+                color: '#8b5cf6',
+                url: 'roguelike_shooter.html'
+            },
+            {
+                id: 'rhythm',
+                title: '彩虹节拍',
+                category: 'music',
+                emoji: '🎵',
+                description: '音乐节奏打击游戏',
+                color: '#ec4899',
+                url: 'rhythm-game.html'
+            },
+            {
+                id: 'stock',
+                title: '股票大亨',
+                category: 'puzzle',
+                emoji: '📈',
+                description: '股票交易策略游戏',
+                color: '#14b8a6',
+                url: 'stock_game.html'
+            },
+            {
+                id: 'candy',
+                title: '糖果消消乐',
+                category: 'puzzle',
+                emoji: '🍬',
+                description: '三消配对游戏',
+                color: '#f43f5e',
+                url: 'candy-game/index.html'
+            },
+            {
+                id: 'idle',
+                title: '闲置矿工',
+                category: 'arcade',
+                emoji: '⛏️',
+                description: '放置类挖矿游戏',
+                color: '#a855f7',
+                url: 'idle-looter.html'
+            },
+            {
+                id: 'penguin',
+                title: '企鹅跳跃',
+                category: 'arcade',
+                emoji: '🐧',
+                description: '企鹅跳上更高平台',
+                color: '#3b82f6',
+                url: 'penguin-jump.html'
+            },
+            {
+                id: 'brick',
+                title: '砖块Break',
+                category: 'arcade',
+                emoji: '🧱',
+                description: '经典打砖块游戏',
+                color: '#06b6d4',
+                url: 'brick-break.html'
+            },
+            {
+                id: 'dodge',
+                title: '太空躲避',
+                category: 'action',
+                emoji: '🚀',
+                description: '躲避障碍物',
+                color: '#f43f5e',
+                url: 'space-dodge.html'
+            },
+            {
+                id: 'memory',
+                title: '记忆翻牌',
+                category: 'puzzle',
+                emoji: '🧠',
+                description: '翻开配对所有卡牌',
+                color: '#8b5cf6',
+                url: 'memory-match.html'
+            }
+        ];
+
+        // Track loaded games
+        let currentCategory = 'all';
+        let currentSearch = '';
+        let loadedGames = new Set();
+
+        // Render games
+        function renderGames() {
+            const grid = document.getElementById('gamesGrid');
+            grid.innerHTML = '';
+
+            const filtered = games.filter(game => {
+                const matchesCategory = currentCategory === 'all' || game.category === currentCategory;
+                const matchesSearch = !currentSearch ||
+                    game.title.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    game.description.toLowerCase().includes(currentSearch.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            filtered.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'card-hover gradient-border rounded-2xl p-1 cursor-pointer';
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.innerHTML = `
+                    <div class="bg-gaming-dark rounded-xl p-6 h-full">
+                        <div class="text-5xl mb-4 float-animation" style="color: ${game.color}">${game.emoji}</div>
+                        <h3 class="text-xl font-bold mb-2">${game.title}</h3>
+                        <p class="text-white/60 text-sm mb-4">${game.description}</p>
+                        <span class="px-3 py-1 rounded-full text-xs" style="background: ${game.color}20; color: ${game.color}">
+                            ${getCategoryName(game.category)}
+                        </span>
+                    </div>
+                `;
+                card.onclick = () => openGame(game);
+                grid.appendChild(card);
+                loadedGames.add(game.id);
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-16 text-white/50">
+                        <div class="text-6xl mb-4">🎮</div>
+                        <p>没有找到符合条件的游戏</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                arcade: '街机',
+                action: '动作',
+                puzzle: '益智',
+                music: '音乐',
+                shooter: '射击'
+            };
+            return names[category] || category;
+        }
+
+        // Open game
+        let currentGame = null;
+
+        function openGame(game) {
+            currentGame = game;
+            document.getElementById('modalTitle').textContent = game.title;
+            document.getElementById('gameFrame').src = game.url;
+            document.getElementById('gameModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGame() {
+            document.getElementById('gameModal').classList.add('hidden');
+            document.getElementById('gameFrame').src = '';
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('closeModal').onclick = closeGame;
+
+        document.getElementById('gameModal').onclick = (e) => {
+            if (e.target.id === 'gameModal') closeGame();
+        };
+
+        document.getElementById('fullscreenBtn').onclick = () => {
+            const frame = document.getElementById('gameFrame');
+            if (frame.requestFullscreen) {
+                frame.requestFullscreen();
+            }
+        };
+
+        document.getElementById('restartGameBtn').onclick = () => {
+            if (currentGame) {
+                document.getElementById('gameFrame').src = currentGame.url;
+            }
+        };
+
+        // Random game
+        document.getElementById('randomGameBtn').onclick = () => {
+            const randomGame = games[Math.floor(Math.random() * games.length)];
+            openGame(randomGame);
+        };
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            renderGames();
+        });
+
+        // Category filter
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentCategory = btn.dataset.category;
+                renderGames();
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeGame();
+            }
+        });
+
+        // Initial render
+        renderGames();
+    </script>
+</body>
+</html>

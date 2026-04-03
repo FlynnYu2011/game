@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彩虹节拍 - 音游</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.8),
+                         0 0 40px rgba(255, 193, 7, 0.6),
+                         0 0 60px rgba(78, 205, 196, 0.4);
+            letter-spacing: 4px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 500px;
+            height: 600px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 30px rgba(255, 107, 107, 0.3),
+                        0 0 60px rgba(78, 205, 196, 0.2);
+            overflow: hidden;
+        }
+
+        .tracks-container {
+            position: absolute;
+            top: 0;
+            bottom: 100px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .track {
+            position: relative;
+            width: 22%;
+            height: 100%;
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            border-right: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hit-zones {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hit-zone {
+            width: 22%;
+            height: 60px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 10px;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.15),
+                        inset 0 0 15px rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+
+        .hit-zone .key-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .hit-zone.active {
+            transform: scale(0.95);
+        }
+
+        .hit-zone.hit-perfect {
+            box-shadow: 0 0 30px #00ff88, inset 0 0 20px rgba(0, 255, 136, 0.4);
+            border-color: #00ff88;
+        }
+
+        .hit-zone.hit-good {
+            box-shadow: 0 0 30px #ffeb3b, inset 0 0 20px rgba(255, 235, 59, 0.4);
+            border-color: #ffeb3b;
+        }
+
+        .hit-zone.hit-miss {
+            box-shadow: 0 0 30px #ff5252, inset 0 0 20px rgba(255, 82, 82, 0.4);
+            border-color: #ff5252;
+        }
+
+        .note {
+            position: absolute;
+            width: 22%;
+            height: 24px;
+            border-radius: 12px;
+            transition: opacity 0.1s;
+        }
+
+        .note.red {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a5a);
+            box-shadow: 0 0 15px #ff6b6b;
+        }
+        .note.orange {
+            background: linear-gradient(90deg, #ffa502, #ff7f00);
+            box-shadow: 0 0 15px #ffa502;
+        }
+        .note.yellow {
+            background: linear-gradient(90deg, #ffd93d, #ffc107);
+            box-shadow: 0 0 15px #ffd93d;
+        }
+        .note.green {
+            background: linear-gradient(90deg, #6bcb77, #4caf50);
+            box-shadow: 0 0 15px #6bcb77;
+        }
+        .note.cyan {
+            background: linear-gradient(90deg, #4ecdc4, #26a69a);
+            box-shadow: 0 0 15px #4ecdc4;
+        }
+        .note.blue {
+            background: linear-gradient(90deg, #45b7d1, #29b6f6);
+            box-shadow: 0 0 15px #45b7d1;
+        }
+        .note.purple {
+            background: linear-gradient(90deg, #a55eea, #8e44ad);
+            box-shadow: 0 0 15px #a55eea;
+        }
+        .note.pink {
+            background: linear-gradient(90deg, #fd79a8, #e84393);
+            box-shadow: 0 0 15px #fd79a8;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #fff;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .time-display {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #fff;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .difficulty-display {
+            position: absolute;
+            top: 40px;
+            left: 15px;
+            color: #ffd93d;
+            font-size: 0.9rem;
+            text-shadow: 0 0 10px #ffd93d;
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 50px;
+            right: 15px;
+            color: #ffd93d;
+            font-size: 1rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ffd93d;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .combo-display.show {
+            opacity: 1;
+        }
+
+        .judgment {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 5;
+        }
+
+        .judgment.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .judgment.perfect { color: #00ff88; text-shadow: 0 0 30px #00ff88; }
+        .judgment.good { color: #ffeb3b; text-shadow: 0 0 30px #ffeb3b; }
+        .judgment.miss { color: #ff5252; text-shadow: 0 0 30px #ff5252; }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn-easy {
+            background: linear-gradient(135deg, #6bcb77 0%, #4caf50 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .btn-normal {
+            background: linear-gradient(135deg, #ffd93d 0%, #ff9800 100%);
+            color: #333;
+            box-shadow: 0 5px 20px rgba(255, 193, 7, 0.5);
+        }
+
+        .btn-hard {
+            background: linear-gradient(135deg, #ff6b6b 0%, #f44336 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(244, 67, 54, 0.5);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-easy:hover { box-shadow: 0 8px 30px rgba(76, 175, 80, 0.7); }
+        .btn-normal:hover { box-shadow: 0 8px 30px rgba(255, 193, 7, 0.7); }
+        .btn-hard:hover { box-shadow: 0 8px 30px rgba(244, 67, 54, 0.7); }
+
+        .btn-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.7);
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.5);
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.7);
+        }
+
+        .info {
+            color: rgba(255,255,255,0.7);
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .key-hints {
+            position: absolute;
+            bottom: 90px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 5%;
+        }
+
+        .key-hints span {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float 15s infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-100px) rotate(180deg); }
+        }
+
+        .start-screen, .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .start-screen {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .game-over {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .game-over.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .start-screen h2, .game-over h2 {
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px #667eea;
+        }
+
+        .game-over h2 {
+            text-shadow: 0 0 20px #ff6b6b;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .difficulty-info {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .game-over .final-score {
+            color: #ffd93d;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 30px #ffd93d;
+            margin-bottom: 10px;
+        }
+
+        .game-over .stats {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <h1>🌈 彩虹节拍 🌈</h1>
+
+    <div class="game-container" id="game">
+        <div class="time-display">时间: <span id="timeLeft">60</span>s</div>
+        <div class="difficulty-display">难度: <span id="difficultyLabel">简单</span></div>
+        <div class="score-display">分数: <span id="score">0</span></div>
+        <div class="combo-display" id="combo">连击 x<span id="comboCount">0</span></div>
+
+        <div class="tracks-container">
+            <div class="track" data-lane="0"></div>
+            <div class="track" data-lane="1"></div>
+            <div class="track" data-lane="2"></div>
+            <div class="track" data-lane="3"></div>
+        </div>
+
+        <div class="hit-zones">
+            <div class="hit-zone" id="hitZone0"><span class="key-label">D</span></div>
+            <div class="hit-zone" id="hitZone1"><span class="key-label">F</span></div>
+            <div class="hit-zone" id="hitZone2"><span class="key-label">J</span></div>
+            <div class="hit-zone" id="hitZone3"><span class="key-label">K</span></div>
+        </div>
+
+        <div class="key-hints">
+            <span>D</span><span>F</span><span>J</span><span>K</span>
+        </div>
+
+        <div class="judgment" id="judgment"></div>
+
+        <div class="start-screen" id="startScreen">
+            <h2>选择难度</h2>
+            <div class="difficulty-buttons">
+                <button class="btn btn-easy" onclick="startGame('easy')">🌱 简单</button>
+                <button class="btn btn-normal" onclick="startGame('normal')">⭐ 普通</button>
+                <button class="btn btn-hard" onclick="startGame('hard')">🔥 困难</button>
+            </div>
+            <div class="difficulty-info">
+                简单: 慢速下落，较少音符<br>
+                普通: 中等速度<br>
+                困难: 快速下落，大量音符
+            </div>
+        </div>
+
+        <div class="game-over" id="gameOver">
+            <h2>游戏结束!</h2>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="stats" id="stats">完美: 0 | 不错: 0 | Miss: 0</div>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn btn-restart" onclick="showDifficultySelect()">重新选择</button>
+                <button class="btn btn-start" onclick="restartGame()">再来一局</button>
+            </div>
+        </div>
+    </div>
+
+    <p class="info">按 D F J K 键击打对应音符 🎵</p>
+
+    <script>
+        const colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink'];
+        const keys = ['KeyD', 'KeyF', 'KeyJ', 'KeyK'];
+        const keyLabels = ['D', 'F', 'J', 'K'];
+        const gameContainer = document.getElementById('game');
+        const hitZones = [
+            document.getElementById('hitZone0'),
+            document.getElementById('hitZone1'),
+            document.getElementById('hitZone2'),
+            document.getElementById('hitZone3')
+        ];
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('timeLeft');
+        const difficultyLabel = document.getElementById('difficultyLabel');
+        const comboDisplay = document.getElementById('combo');
+        const comboCountEl = document.getElementById('comboCount');
+        const judgmentEl = document.getElementById('judgment');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverEl = document.getElementById('gameOver');
+
+        let score = 0;
+        let combo = 0;
+        let perfectCount = 0;
+        let goodCount = 0;
+        let missCount = 0;
+        let isPlaying = false;
+        let notes = [];
+        let gameLoop = null;
+        let noteSpawner = null;
+        let gameTime = 0;
+        let timerInterval = null;
+        let currentDifficulty = 'normal';
+
+        const difficulties = {
+            easy: {
+                name: '简单',
+                duration: 60,
+                initialSpawnRate: 1000,
+                minSpawnRate: 600,
+                speedMin: 2.5,
+                speedMax: 3.5,
+                spawnDecay: 5
+            },
+            normal: {
+                name: '普通',
+                duration: 60,
+                initialSpawnRate: 700,
+                minSpawnRate: 300,
+                speedMin: 3.5,
+                speedMax: 5,
+                spawnDecay: 8
+            },
+            hard: {
+                name: '困难',
+                duration: 90,
+                initialSpawnRate: 500,
+                minSpawnRate: 180,
+                speedMin: 5,
+                speedMax: 7,
+                spawnDecay: 12
+            }
+        };
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.width = (Math.random() * 100 + 50) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.background = `linear-gradient(135deg, ${colors[Math.floor(Math.random() * colors.length)]}, transparent)`;
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function spawnNote() {
+            const lane = Math.floor(Math.random() * 4);
+            const note = document.createElement('div');
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const diff = difficulties[currentDifficulty];
+
+            note.className = `note ${color}`;
+            note.style.top = '-24px';
+            note.style.left = (30 + lane * 11.75) + '%';
+            note.style.width = '11%';
+            note.dataset.lane = lane;
+            note.dataset.color = color;
+            note.dataset.speed = diff.speedMin + Math.random() * (diff.speedMax - diff.speedMin);
+
+            gameContainer.appendChild(note);
+            notes.push(note);
+        }
+
+        function updateNotes() {
+            const hitZoneTop = gameContainer.offsetHeight - 80;  // 底部20px + 高度60px
+
+            notes.forEach((note, index) => {
+                const top = parseFloat(note.style.top) || -24;
+                const speed = parseFloat(note.dataset.speed);
+                note.style.top = (top + speed) + 'px';
+
+                if (top > gameContainer.offsetHeight) {
+                    if (!note.dataset.hit) {
+                        const lane = parseInt(note.dataset.lane);
+                        showHitZoneEffect(lane, 'miss');
+                        showJudgment('miss');
+                        missCount++;
+                        combo = 0;
+                        updateCombo();
+                    }
+                    note.remove();
+                    notes.splice(index, 1);
+                }
+            });
+        }
+
+        function hit(lane) {
+            if (!isPlaying || lane === undefined) return;
+
+            const hitZoneTop = gameContainer.offsetHeight - 80;
+            const hitZoneCenter = hitZoneTop + 30;
+            let hitNote = null;
+            let closestDistance = Infinity;
+
+            // 找到该轨道上最接近判定区中心的音符
+            for (let i = 0; i < notes.length; i++) {
+                const note = notes[i];
+                if (note.dataset.hit || parseInt(note.dataset.lane) !== lane) continue;
+
+                const noteTop = parseFloat(note.style.top);
+                const noteCenter = noteTop + 12;
+
+                // 计算到判定区中心的距离
+                const distance = Math.abs(noteCenter - hitZoneCenter);
+
+                // 判定范围: 判定区前后各50px以内都可以击打
+                if (distance < 50) {
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        hitNote = note;
+                    }
+                }
+            }
+
+            if (hitNote) {
+                const noteTop = parseFloat(hitNote.style.top);
+                const distance = Math.abs(noteTop - hitZoneTop);
+
+                hitNote.dataset.hit = 'true';
+                hitNote.style.opacity = '0';
+                hitNote.style.transform = 'scale(1.5)';
+
+                // 更宽松的判定
+                if (distance < 25) {
+                    score += 100;
+                    perfectCount++;
+                    combo++;
+                    showHitZoneEffect(lane, 'perfect');
+                    showJudgment('perfect');
+                } else if (distance < 50) {
+                    score += 50;
+                    goodCount++;
+                    combo++;
+                    showHitZoneEffect(lane, 'good');
+                    showJudgment('good');
+                } else {
+                    score += 20;
+                    combo = 0;
+                    showHitZoneEffect(lane, 'miss');
+                    showJudgment('miss');
+                    missCount++;
+                }
+
+                updateScore();
+                updateCombo();
+
+                setTimeout(() => {
+                    const idx = notes.indexOf(hitNote);
+                    if (idx > -1) {
+                        hitNote.remove();
+                        notes.splice(idx, 1);
+                    }
+                }, 100);
+            } else {
+                // 按键但没有击中音符，不算miss，避免惩罚
+            }
+        }
+
+        function showHitZoneEffect(lane, type) {
+            const hitZone = hitZones[lane];
+            hitZone.classList.add('active');
+
+            if (type === 'perfect') {
+                hitZone.classList.add('hit-perfect');
+            } else if (type === 'good') {
+                hitZone.classList.add('hit-good');
+            } else {
+                hitZone.classList.add('hit-miss');
+            }
+
+            setTimeout(() => {
+                hitZone.classList.remove('active', 'hit-perfect', 'hit-good', 'hit-miss');
+            }, 150);
+        }
+
+        function showJudgment(type) {
+            judgmentEl.className = `judgment ${type} show`;
+            judgmentEl.textContent = type === 'perfect' ? '完美!' : type === 'good' ? '不错!' : 'Miss!';
+
+            setTimeout(() => {
+                judgmentEl.classList.remove('show');
+            }, 300);
+        }
+
+        function updateScore() {
+            scoreDisplay.textContent = score;
+        }
+
+        function updateCombo() {
+            comboCountEl.textContent = combo;
+            if (combo >= 3) {
+                comboDisplay.classList.add('show');
+            } else {
+                comboDisplay.classList.remove('show');
+            }
+        }
+
+        function showDifficultySelect() {
+            gameOverEl.classList.remove('show');
+            startScreen.classList.remove('hidden');
+        }
+
+        function startGame(difficulty) {
+            if (isPlaying) return;
+
+            currentDifficulty = difficulty;
+            const diff = difficulties[difficulty];
+
+            isPlaying = true;
+            score = 0;
+            combo = 0;
+            perfectCount = 0;
+            goodCount = 0;
+            missCount = 0;
+            gameTime = diff.duration;
+
+            notes.forEach(n => n.remove());
+            notes = [];
+
+            updateScore();
+            updateCombo();
+            timeDisplay.textContent = gameTime;
+            difficultyLabel.textContent = diff.name;
+
+            startScreen.classList.add('hidden');
+            gameOverEl.classList.remove('show');
+
+            gameLoop = setInterval(updateNotes, 16);
+
+            let spawnRate = diff.initialSpawnRate;
+            const spawnNoteWrapper = () => {
+                if (!isPlaying) return;
+                spawnNote();
+                spawnRate = Math.max(diff.minSpawnRate, spawnRate - diff.spawnDecay);
+                noteSpawner = setTimeout(spawnNoteWrapper, spawnRate);
+            };
+            noteSpawner = setTimeout(spawnNoteWrapper, spawnRate);
+
+            timerInterval = setInterval(() => {
+                gameTime--;
+                timeDisplay.textContent = gameTime;
+                if (gameTime <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(gameLoop);
+            clearTimeout(noteSpawner);
+            clearInterval(timerInterval);
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('stats').textContent =
+                `完美: ${perfectCount} | 不错: ${goodCount} | Miss: ${missCount}`;
+            gameOverEl.classList.add('show');
+        }
+
+        function restartGame() {
+            gameOverEl.classList.remove('show');
+            startGame(currentDifficulty);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+
+            let laneIndex = -1;
+            const key = e.key.toLowerCase();
+
+            // 支持多种按键方式
+            if (key === 'd') laneIndex = 0;
+            else if (key === 'f') laneIndex = 1;
+            else if (key === 'j') laneIndex = 2;
+            else if (key === 'k') laneIndex = 3;
+
+            if (laneIndex > -1) {
+                e.preventDefault();
+                hit(laneIndex);
+            }
+        });
+
+        hitZones.forEach((zone, index) => {
+            zone.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                hit(index);
+            });
+        });
+
+        createParticles();
+    </script>
+</body>
+</html>

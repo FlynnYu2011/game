@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>糖果消消乐</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fredoka One', cursive;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            overflow: hidden;
+        }
+
+        /* 背景动画星星 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        .game-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .title {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #ff2e63, #08d9d6, #f9ed69);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 46, 99, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(255, 46, 99, 0.8)); }
+            to { filter: drop-shadow(0 0 20px rgba(8, 217, 214, 0.8)); }
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin-bottom: 15px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-item {
+            text-align: center;
+            color: #fff;
+        }
+
+        .info-label {
+            font-size: 0.8em;
+            color: #08d9d6;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.5em;
+            color: #f9ed69;
+            text-shadow: 0 0 10px rgba(249, 237, 105, 0.5);
+        }
+
+        .phase-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .phase {
+            width: 120px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phase-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .phase:nth-child(1) .phase-fill { background: linear-gradient(90deg, #55efc4, #00b894); }
+        .phase:nth-child(2) .phase-fill { background: linear-gradient(90deg, #ffeaa7, #fdcb6e); }
+        .phase:nth-child(3) .phase-fill { background: linear-gradient(90deg, #ff6b6b, #ee5a5a); }
+
+        .phase.completed .phase-fill {
+            width: 100% !important;
+        }
+
+        .phase-label {
+            display: flex;
+            justify-content: space-around;
+            width: 400px;
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 0.7em;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 4px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(8, 217, 214, 0.2);
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+        }
+
+        .cell.selected {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        .cell.red.selected { box-shadow: 0 0 20px #ff6b6b, inset 0 0 15px rgba(255, 107, 107, 0.5); }
+        .cell.orange.selected { box-shadow: 0 0 20px #ffa502, inset 0 0 15px rgba(255, 165, 2, 0.5); }
+        .cell.yellow.selected { box-shadow: 0 0 20px #ffeaa7, inset 0 0 15px rgba(255, 234, 167, 0.5); }
+        .cell.green.selected { box-shadow: 0 0 20px #55efc4, inset 0 0 15px rgba(85, 239, 196, 0.5); }
+        .cell.blue.selected { box-shadow: 0 0 20px #74b9ff, inset 0 0 15px rgba(116, 185, 255, 0.5); }
+        .cell.purple.selected { box-shadow: 0 0 20px #a29bfe, inset 0 0 15px rgba(162, 155, 254, 0.5); }
+
+        .candy {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: relative;
+            transition: transform 0.2s ease, opacity 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .candy::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            width: 12px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+
+        .candy.red { background: radial-gradient(circle at 30% 30%, #ff8787, #ff6b6b, #c92a2a); }
+        .candy.orange { background: radial-gradient(circle at 30% 30%, #ffc078, #ffa502, #e67700); }
+        .candy.yellow { background: radial-gradient(circle at 30% 30%, #fff3bf, #ffeaa7, #f9ca24); }
+        .candy.green { background: radial-gradient(circle at 30% 30%, #81ecec, #55efc4, #00b894); }
+        .candy.blue { background: radial-gradient(circle at 30% 30%, #a8e6cf, #74b9ff, #0984e3); }
+        .candy.purple { background: radial-gradient(circle at 30% 30%, #d4a5ff, #a29bfe, #6c5ce7); }
+
+        .candy.hint {
+            animation: bounce 0.5s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .candy.matched {
+            animation: pop 0.3s ease forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .candy.falling {
+            animation: fall 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes fall {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .combo-text {
+            position: fixed;
+            font-size: 3em;
+            color: #f9ed69;
+            text-shadow: 0 0 20px #ff2e63, 0 0 40px #08d9d6;
+            pointer-events: none;
+            z-index: 100;
+            animation: comboAnim 1s ease forwards;
+        }
+
+        @keyframes comboAnim {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg) translateY(-50px); opacity: 0; }
+        }
+
+        .message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .message-box {
+            background: linear-gradient(135deg, #2d3436 0%, #1a1a2e 100%);
+            padding: 40px 60px;
+            border-radius: 25px;
+            text-align: center;
+            border: 3px solid #08d9d6;
+            box-shadow: 0 0 50px rgba(8, 217, 214, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .message-overlay.show .message-box {
+            transform: scale(1);
+        }
+
+        .message-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .message-title.success { color: #55efc4; }
+        .message-title.fail { color: #ff6b6b; }
+        .message-title.warning { color: #ffeaa7; }
+
+        .message-text {
+            color: #dfe6e9;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff2e63, #08d9d6);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(255, 46, 99, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #55efc4, #00b894);
+            color: #1a1a2e;
+            box-shadow: 0 5px 20px rgba(85, 239, 196, 0.4);
+        }
+
+        .phase-name {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .phase-name span {
+            padding: 5px 20px;
+            border-radius: 20px;
+            color: #1a1a2e;
+        }
+
+        .phase-name .easy { background: linear-gradient(90deg, #55efc4, #00b894); }
+        .phase-name .medium { background: linear-gradient(90deg, #ffeaa7, #fdcb6e); }
+        .phase-name .hard { background: linear-gradient(90deg, #ff6b6b, #ee5a5a); }
+
+        .particles {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: particleFly 0.8s ease forwards;
+        }
+
+        @keyframes particleFly {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease;
+        }
+
+        .difficulty-label {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.7em;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .easy .difficulty-label { background: #55efc4; }
+        .medium .difficulty-label { background: #ffeaa7; }
+        .hard .difficulty-label { background: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+
+    <div class="game-container">
+        <div class="header">
+            <h1 class="title">糖果消消乐</h1>
+        </div>
+
+        <div class="phase-name" id="phaseName">
+            <span class="easy">第一阶段 - 入门</span>
+        </div>
+
+        <div class="phase-bar">
+            <div class="phase" id="phase1">
+                <div class="phase-fill" style="width: 0%"></div>
+            </div>
+            <div class="phase" id="phase2">
+                <div class="phase-fill" style="width: 0%"></div>
+            </div>
+            <div class="phase" id="phase3">
+                <div class="phase-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="info-bar">
+            <div class="info-item">
+                <div class="info-label">分数</div>
+                <div class="info-value" id="score">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">目标</div>
+                <div class="info-value" id="target">500</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">步数</div>
+                <div class="info-value" id="moves">15</div>
+            </div>
+        </div>
+
+        <div class="game-board" id="board"></div>
+    </div>
+
+    <div class="message-overlay" id="overlay">
+        <div class="message-box">
+            <div class="message-title" id="messageTitle">恭喜过关!</div>
+            <div class="message-text" id="messageText">你完成了第一阶段!</div>
+            <button class="btn btn-primary" id="nextBtn">下一阶段</button>
+            <button class="btn btn-secondary" id="retryBtn" style="display: none;">重试</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏配置
+        const CONFIG = {
+            rows: 8,
+            cols: 8,
+            colors: ['red', 'orange', 'yellow', 'green', 'blue', 'purple'],
+            phases: [
+                { name: '第一阶段 - 入门', difficulty: 'easy', target: 300, moves: 20, candyTypes: 6 },
+                { name: '第二阶段 - 进阶', difficulty: 'medium', target: 1500, moves: 12, candyTypes: 5 },
+                { name: '第三阶段 - 炼狱', difficulty: 'hard', target: 3000, moves: 10, candyTypes: 4 }
+            ]
+        };
+
+        // 游戏状态
+        let gameState = {
+            board: [],
+            selected: null,
+            score: 0,
+            moves: 0,
+            phase: 0,
+            phasesCompleted: [false, false, false],
+            isAnimating: false,
+            combo: 0
+        };
+
+        // DOM元素
+        const boardEl = document.getElementById('board');
+        const scoreEl = document.getElementById('score');
+        const targetEl = document.getElementById('target');
+        const movesEl = document.getElementById('moves');
+        const phaseNameEl = document.getElementById('phaseName');
+        const overlay = document.getElementById('overlay');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const nextBtn = document.getElementById('nextBtn');
+        const retryBtn = document.getElementById('retryBtn');
+
+        // 初始化背景星星
+        function initStars() {
+            const starsEl = document.getElementById('stars');
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.opacity = Math.random() * 0.5 + 0.3;
+                starsEl.appendChild(star);
+            }
+        }
+
+        // 获取当前阶段配置
+        function getCurrentPhase() {
+            return CONFIG.phases[gameState.phase];
+        }
+
+        // 获取可用糖果颜色
+        function getAvailableColors() {
+            const phase = getCurrentPhase();
+            return CONFIG.colors.slice(0, phase.candyTypes);
+        }
+
+        // 初始化游戏板
+        function initBoard() {
+            const colors = getAvailableColors();
+            gameState.board = [];
+
+            for (let row = 0; row < CONFIG.rows; row++) {
+                gameState.board[row] = [];
+                for (let col = 0; col < CONFIG.cols; col++) {
+                    let color;
+                    do {
+                        color = colors[Math.floor(Math.random() * colors.length)];
+                    } while (wouldCreateMatch(row, col, color));
+
+                    gameState.board[row][col] = color;
+                }
+            }
+
+            renderBoard();
+        }
+
+        // 检查是否会创建匹配
+        function wouldCreateMatch(row, col, color) {
+            // 检查水平方向
+            if (col >= 2 &&
+                gameState.board[row][col - 1] === color &&
+                gameState.board[row][col - 2] === color) {
+                return true;
+            }
+            // 检查垂直方向
+            if (row >= 2 &&
+                gameState.board[row - 1]?.[col] === color &&
+                gameState.board[row - 2]?.[col] === color) {
+                return true;
+            }
+            return false;
+        }
+
+        // 渲染游戏板
+        function renderBoard() {
+            boardEl.innerHTML = '';
+
+            for (let row = 0; row < CONFIG.rows; row++) {
+                for (let col = 0; col < CONFIG.cols; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${gameState.board[row][col] || ''}`;
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    if (gameState.board[row][col]) {
+                        const candy = document.createElement('div');
+                        candy.className = `candy ${gameState.board[row][col]}`;
+                        cell.appendChild(candy);
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        // 处理点击
+        function handleCellClick(row, col) {
+            if (gameState.isAnimating) return;
+
+            const cell = boardEl.children[row * CONFIG.cols + col];
+
+            if (gameState.selected === null) {
+                // 第一次点击
+                gameState.selected = { row, col };
+                cell.classList.add('selected');
+            } else if (gameState.selected.row === row && gameState.selected.col === col) {
+                // 点击同一个，取消选择
+                cell.classList.remove('selected');
+                gameState.selected = null;
+            } else if (isAdjacent(gameState.selected, { row, col })) {
+                // 相邻格子，尝试交换
+                const prevCell = boardEl.children[gameState.selected.row * CONFIG.cols + gameState.selected.col];
+                prevCell.classList.remove('selected');
+                swapCandies(gameState.selected, { row, col });
+                gameState.selected = null;
+            } else {
+                // 不相邻，选择新的
+                const prevCell = boardEl.children[gameState.selected.row * CONFIG.cols + gameState.selected.col];
+                prevCell.classList.remove('selected');
+                gameState.selected = { row, col };
+                cell.classList.add('selected');
+            }
+        }
+
+        // 检查是否相邻
+        function isAdjacent(pos1, pos2) {
+            const rowDiff = Math.abs(pos1.row - pos2.row);
+            const colDiff = Math.abs(pos1.col - pos2.col);
+            return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+        }
+
+        // 交换糖果
+        async function swapCandies(pos1, pos2) {
+            gameState.isAnimating = true;
+            gameState.combo = 0;
+
+            // 交换数据
+            const temp = gameState.board[pos1.row][pos1.col];
+            gameState.board[pos1.row][pos1.col] = gameState.board[pos2.row][pos2.col];
+            gameState.board[pos2.row][pos2.col] = temp;
+
+            renderBoard();
+
+            // 检查是否有匹配
+            const matches = findMatches();
+
+            if (matches.length === 0) {
+                // 没有匹配，交换回去
+                await delay(200);
+                const temp2 = gameState.board[pos1.row][pos1.col];
+                gameState.board[pos1.row][pos1.col] = gameState.board[pos2.row][pos2.col];
+                gameState.board[pos2.row][pos2.col] = temp2;
+                renderBoard();
+                gameState.isAnimating = false;
+                return;
+            }
+
+            // 有匹配，处理消除
+            gameState.moves--;
+            updateUI();
+
+            await processMatches();
+            gameState.isAnimating = false;
+
+            checkGameState();
+        }
+
+        // 查找匹配
+        function findMatches() {
+            const matches = new Set();
+
+            // 检查水平匹配
+            for (let row = 0; row < CONFIG.rows; row++) {
+                for (let col = 0; col < CONFIG.cols - 2; col++) {
+                    const color = gameState.board[row][col];
+                    if (color && color === gameState.board[row][col + 1] && color === gameState.board[row][col + 2]) {
+                        let end = col + 2;
+                        while (end + 1 < CONFIG.cols && gameState.board[row][end + 1] === color) {
+                            end++;
+                        }
+                        for (let c = col; c <= end; c++) {
+                            matches.add(`${row},${c}`);
+                        }
+                    }
+                }
+            }
+
+            // 检查垂直匹配
+            for (let col = 0; col < CONFIG.cols; col++) {
+                for (let row = 0; row < CONFIG.rows - 2; row++) {
+                    const color = gameState.board[row][col];
+                    if (color && color === gameState.board[row + 1]?.[col] && color === gameState.board[row + 2]?.[col]) {
+                        let end = row + 2;
+                        while (end + 1 < CONFIG.rows && gameState.board[end + 1]?.[col] === color) {
+                            end++;
+                        }
+                        for (let r = row; r <= end; r++) {
+                            matches.add(`${r},${col}`);
+                        }
+                    }
+                }
+            }
+
+            return Array.from(matches).map(m => {
+                const [row, col] = m.split(',').map(Number);
+                return { row, col };
+            });
+        }
+
+        // 处理匹配
+        async function processMatches() {
+            let matches = findMatches();
+
+            while (matches.length > 0) {
+                gameState.combo++;
+
+                // 计算分数 (连击加成)
+                const baseScore = matches.length * 10;
+                const comboBonus = Math.max(1, gameState.combo - 1) * 5;
+                const earnedScore = baseScore + comboBonus * (matches.length - 3);
+                gameState.score += earnedScore;
+
+                // 显示连击文字
+                if (gameState.combo > 1) {
+                    showComboText(gameState.combo);
+                }
+
+                // 屏幕震动
+                boardEl.classList.add('shake');
+                setTimeout(() => boardEl.classList.remove('shake'), 300);
+
+                // 创建粒子效果
+                matches.forEach(m => {
+                    const cell = boardEl.children[m.row * CONFIG.cols + m.col];
+                    const candy = cell.querySelector('.candy');
+                    if (candy) {
+                        createParticles(cell, candy.classList[1]);
+                        candy.classList.add('matched');
+                    }
+                });
+
+                await delay(300);
+
+                // 移除匹配的糖果
+                matches.forEach(m => {
+                    gameState.board[m.row][m.col] = null;
+                });
+
+                updateUI();
+
+                // 下落填充
+                await dropCandies();
+                await fillBoard();
+
+                matches = findMatches();
+            }
+        }
+
+        // 糖果下落
+        async function dropCandies() {
+            let dropped = false;
+
+            for (let col = 0; col < CONFIG.cols; col++) {
+                let emptyRow = CONFIG.rows - 1;
+
+                for (let row = CONFIG.rows - 1; row >= 0; row--) {
+                    if (gameState.board[row][col] !== null) {
+                        if (row !== emptyRow) {
+                            gameState.board[emptyRow][col] = gameState.board[row][col];
+                            gameState.board[row][col] = null;
+                            dropped = true;
+                        }
+                        emptyRow--;
+                    }
+                }
+            }
+
+            if (dropped) {
+                renderBoard();
+                // 添加下落动画
+                document.querySelectorAll('.candy').forEach(candy => {
+                    candy.classList.add('falling');
+                });
+                await delay(400);
+            }
+        }
+
+        // 填充新糖果
+        async function fillBoard() {
+            const colors = getAvailableColors();
+
+            for (let col = 0; col < CONFIG.cols; col++) {
+                for (let row = 0; row < CONFIG.rows; row++) {
+                    if (gameState.board[row][col] === null) {
+                        gameState.board[row][col] = colors[Math.floor(Math.random() * colors.length)];
+                    }
+                }
+            }
+
+            renderBoard();
+            document.querySelectorAll('.candy').forEach(candy => {
+                candy.classList.add('falling');
+            });
+            await delay(400);
+        }
+
+        // 创建粒子效果
+        function createParticles(cell, color) {
+            const rect = cell.getBoundingClientRect();
+            const particles = document.createElement('div');
+            particles.className = 'particles';
+            particles.style.left = rect.left + 25 + 'px';
+            particles.style.top = rect.top + 25 + 'px';
+
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.background = getColorValue(color);
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 30 + Math.random() * 20;
+                particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+                particles.appendChild(particle);
+            }
+
+            document.body.appendChild(particles);
+            setTimeout(() => particles.remove(), 800);
+        }
+
+        // 获取颜色值
+        function getColorValue(colorName) {
+            const colors = {
+                red: '#ff6b6b',
+                orange: '#ffa502',
+                yellow: '#ffeaa7',
+                green: '#55efc4',
+                blue: '#74b9ff',
+                purple: '#a29bfe'
+            };
+            return colors[colorName];
+        }
+
+        // 显示连击文字
+        function showComboText(combo) {
+            const text = document.createElement('div');
+            text.className = 'combo-text';
+            text.textContent = `${combo}x COMBO!`;
+            text.style.left = '50%';
+            text.style.top = '50%';
+            text.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 1000);
+        }
+
+        // 延迟函数
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 更新UI
+        function updateUI() {
+            const phase = getCurrentPhase();
+            scoreEl.textContent = gameState.score;
+            targetEl.textContent = phase.target;
+            movesEl.textContent = gameState.moves;
+
+            // 更新阶段进度条
+            const progress = Math.min(100, (gameState.score / phase.target) * 100);
+            const phaseEl = document.getElementById(`phase${gameState.phase + 1}`);
+            phaseEl.querySelector('.phase-fill').style.width = progress + '%';
+        }
+
+        // 检查游戏状态
+        function checkGameState() {
+            const phase = getCurrentPhase();
+
+            if (gameState.score >= phase.target) {
+                // 阶段完成
+                gameState.phasesCompleted[gameState.phase] = true;
+                showMessage('success', '恭喜过关!', `你完成了${phase.name}!`);
+
+                if (gameState.phase < 2) {
+                    nextBtn.textContent = '下一阶段';
+                    nextBtn.onclick = () => {
+                        hideMessage();
+                        nextPhase();
+                    };
+                    retryBtn.style.display = 'none';
+                } else {
+                    // 通关
+                    nextBtn.textContent = '再玩一次';
+                    nextBtn.onclick = () => {
+                        hideMessage();
+                        restartGame();
+                    };
+                    retryBtn.style.display = 'none';
+                }
+            } else if (gameState.moves <= 0) {
+                // 失败
+                showMessage('fail', '步数用尽!', `目标分数: ${phase.target}，当前: ${gameState.score}`);
+
+                retryBtn.style.display = 'inline-block';
+                retryBtn.onclick = () => {
+                    hideMessage();
+                    restartPhase();
+                };
+                nextBtn.textContent = '下一阶段';
+                nextBtn.onclick = () => {
+                    hideMessage();
+                    if (gameState.phase < 2) {
+                        nextPhase();
+                    } else {
+                        restartGame();
+                    }
+                };
+            }
+        }
+
+        // 显示消息
+        function showMessage(type, title, text) {
+            messageTitle.className = 'message-title ' + type;
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            overlay.classList.add('show');
+        }
+
+        // 隐藏消息
+        function hideMessage() {
+            overlay.classList.remove('show');
+        }
+
+        // 下一阶段
+        function nextPhase() {
+            gameState.phase++;
+            resetPhaseState();
+            initBoard();
+        }
+
+        // 重试当前阶段
+        function restartPhase() {
+            resetPhaseState();
+            initBoard();
+        }
+
+        // 重置阶段状态
+        function resetPhaseState() {
+            const phase = getCurrentPhase();
+            gameState.score = 0;
+            gameState.moves = phase.moves;
+            gameState.selected = null;
+            gameState.combo = 0;
+            gameState.isAnimating = false;
+
+            // 更新阶段名称
+            phaseNameEl.innerHTML = `<span class="${phase.difficulty}">${phase.name}</span>`;
+
+            // 重置进度条
+            for (let i = 1; i <= 3; i++) {
+                const phaseEl = document.getElementById(`phase${i}`);
+                if (i - 1 < gameState.phase || gameState.phasesCompleted[i - 1]) {
+                    phaseEl.querySelector('.phase-fill').style.width = '100%';
+                    phaseEl.classList.add('completed');
+                } else if (i - 1 === gameState.phase) {
+                    phaseEl.querySelector('.phase-fill').style.width = '0%';
+                    phaseEl.classList.remove('completed');
+                } else {
+                    phaseEl.querySelector('.phase-fill').style.width = '0%';
+                    phaseEl.classList.remove('completed');
+                }
+            }
+
+            updateUI();
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            gameState = {
+                board: [],
+                selected: null,
+                score: 0,
+                moves: 0,
+                phase: 0,
+                phasesCompleted: [false, false, false],
+                isAnimating: false,
+                combo: 0
+            };
+
+            // 重置所有进度条
+            for (let i = 1; i <= 3; i++) {
+                const phaseEl = document.getElementById(`phase${i}`);
+                phaseEl.querySelector('.phase-fill').style.width = '0%';
+                phaseEl.classList.remove('completed');
+            }
+
+            resetPhaseState();
+            initBoard();
+        }
+
+        // 初始化游戏
+        function init() {
+            initStars();
+            resetPhaseState();
+            initBoard();
+        }
+
+        // 启动游戏
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+setup.py
+StockRush.egg-info/PKG-INFO
+StockRush.egg-info/SOURCES.txt
+StockRush.egg-info/dependency_links.txt
+StockRush.egg-info/top_level.txt
