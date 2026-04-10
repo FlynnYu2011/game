@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法八号球</title>
+<style>
+  :root {
+    --bg-top: #090511;
+    --bg-mid: #140b25;
+    --bg-bottom: #040308;
+    --panel: rgba(18, 12, 34, 0.72);
+    --panel-border: rgba(182, 139, 255, 0.22);
+    --text-main: #f7efff;
+    --text-soft: #c3b6dc;
+    --accent: #b26cff;
+    --accent-2: #67d6ff;
+    --accent-3: #ffd36e;
+    --shadow: 0 25px 80px rgba(88, 34, 145, 0.45);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
+    color: var(--text-main);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(145, 86, 255, 0.15), transparent 26%),
+      radial-gradient(circle at 80% 18%, rgba(103, 214, 255, 0.12), transparent 24%),
+      radial-gradient(circle at 50% 78%, rgba(255, 211, 110, 0.08), transparent 28%),
+      linear-gradient(180deg, var(--bg-top), var(--bg-mid) 48%, var(--bg-bottom));
+    overflow-x: hidden;
+  }
+
+  .stars,
+  .stars::before,
+  .stars::after {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    content: "";
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.85) 0 1px, transparent 2px),
+      radial-gradient(circle at 40% 70%, rgba(255, 255, 255, 0.7) 0 1.2px, transparent 2.2px),
+      radial-gradient(circle at 72% 32%, rgba(178, 108, 255, 0.9) 0 1.4px, transparent 2.4px),
+      radial-gradient(circle at 85% 65%, rgba(103, 214, 255, 0.8) 0 1.2px, transparent 2.2px),
+      radial-gradient(circle at 58% 12%, rgba(255, 255, 255, 0.75) 0 1px, transparent 2px),
+      radial-gradient(circle at 30% 88%, rgba(255, 211, 110, 0.85) 0 1.4px, transparent 2.6px);
+    animation: drift 26s linear infinite;
+    opacity: 0.7;
+  }
+
+  .stars::before {
+    transform: scale(1.15);
+    opacity: 0.38;
+    animation-duration: 38s;
+  }
+
+  .stars::after {
+    transform: scale(1.35);
+    opacity: 0.24;
+    animation-duration: 52s;
+  }
+
+  @keyframes drift {
+    from { transform: translateY(0); }
+    to { transform: translateY(-28px); }
+  }
+
+  .page {
+    position: relative;
+    width: min(1080px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 48px 0 56px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 30px;
+    animation: fadeUp 0.8s ease;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    font-size: 0.84rem;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin-top: 18px;
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    line-height: 1.02;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 24px rgba(178, 108, 255, 0.35);
+  }
+
+  .subtitle {
+    width: min(620px, 100%);
+    margin: 18px auto 0;
+    color: var(--text-soft);
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1.08fr 0.92fr;
+    gap: 28px;
+    align-items: stretch;
+  }
+
+  .panel {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 28px;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeUp 1s ease;
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 32%),
+      radial-gradient(circle at top right, rgba(178, 108, 255, 0.18), transparent 34%);
+    pointer-events: none;
+  }
+
+  .oracle {
+    display: grid;
+    place-items: center;
+    min-height: 620px;
+    padding: 36px 28px;
+  }
+
+  .orbital-ring {
+    position: absolute;
+    width: 520px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    filter: blur(0.2px);
+    animation: spin 28s linear infinite;
+  }
+
+  .orbital-ring::before,
+  .orbital-ring::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.85), transparent 72%);
+  }
+
+  .orbital-ring::before {
+    width: 10px;
+    height: 10px;
+    top: 42px;
+    left: 86px;
+  }
+
+  .orbital-ring::after {
+    width: 8px;
+    height: 8px;
+    right: 64px;
+    bottom: 72px;
+  }
+
+  .eight-ball {
+    position: relative;
+    width: min(82vw, 380px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.2), transparent 16%),
+      radial-gradient(circle at 50% 42%, #29203f 0, #100b1e 40%, #05040a 70%, #000 100%);
+    box-shadow:
+      inset -18px -26px 45px rgba(0, 0, 0, 0.78),
+      inset 18px 18px 45px rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 32px 90px rgba(0, 0, 0, 0.72),
+      0 0 60px rgba(116, 69, 207, 0.25);
+    display: grid;
+    place-items: center;
+    animation: floatBall 4.8s ease-in-out infinite;
+  }
+
+  .eight-ball::before {
+    content: "";
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 65%, rgba(255, 255, 255, 0.05) 74%, transparent 76%);
+    opacity: 0.8;
+  }
+
+  .number-badge {
+    position: absolute;
+    top: 74px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 102px;
+    height: 102px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 35%, #fff, #cbc4da 62%, #a39ab7);
+    color: #160f26;
+    display: grid;
+    place-items: center;
+    font-size: 3.5rem;
+    font-weight: 700;
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.16);
+  }
+
+  .answer-window {
+    position: relative;
+    width: 46%;
+    aspect-ratio: 1;
+    margin-top: 42px;
+    clip-path: polygon(50% 0%, 4% 88%, 96% 88%);
+    background:
+      linear-gradient(180deg, rgba(4, 18, 44, 0.95), rgba(14, 62, 110, 0.95));
+    box-shadow:
+      inset 0 0 18px rgba(255, 255, 255, 0.15),
+      0 0 28px rgba(103, 214, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 16px 22px;
+    text-align: center;
+  }
+
+  .answer {
+    font-size: clamp(1rem, 2.6vw, 1.25rem);
+    line-height: 1.5;
+    letter-spacing: 0.05em;
+    color: #ebf6ff;
+    text-shadow: 0 0 16px rgba(140, 225, 255, 0.35);
+    max-width: 220px;
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  .answer.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .shake .answer {
+    opacity: 0.35;
+  }
+
+  .controls {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .panel-title {
+    font-size: 1.65rem;
+    margin-bottom: 4px;
+  }
+
+  .panel-copy {
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+
+  .field-label {
+    display: block;
+    margin-bottom: 10px;
+    color: #eadfff;
+    font-size: 0.96rem;
+  }
+
+  .question-box {
+    width: 100%;
+    min-height: 138px;
+    resize: vertical;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 1rem;
+    line-height: 1.7;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  }
+
+  .question-box::placeholder {
+    color: rgba(225, 214, 244, 0.52);
+  }
+
+  .question-box:focus {
+    border-color: rgba(178, 108, 255, 0.55);
+    box-shadow: 0 0 0 4px rgba(178, 108, 255, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  button {
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    min-height: 50px;
+    border-radius: 999px;
+    padding: 0 22px;
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .primary-btn {
+    color: #14091f;
+    background: linear-gradient(135deg, var(--accent-3), #fff1a9 52%, var(--accent));
+    box-shadow: 0 14px 32px rgba(178, 108, 255, 0.26);
+  }
+
+  .secondary-btn {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  .status-card {
+    border-radius: 22px;
+    padding: 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(178, 108, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .status-label {
+    color: rgba(231, 218, 251, 0.7);
+    font-size: 0.86rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-text {
+    margin-top: 8px;
+    font-size: 1.06rem;
+    line-height: 1.7;
+    min-height: 56px;
+  }
+
+  .history-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .history {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    max-height: 228px;
+    overflow: auto;
+    padding-right: 6px;
+  }
+
+  .history::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .history::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .history-item {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .history-question {
+    color: #fff;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .history-answer {
+    margin-top: 8px;
+    color: #9fe7ff;
+    font-size: 0.93rem;
+  }
+
+  .history-empty {
+    color: rgba(225, 214, 244, 0.54);
+    text-align: center;
+    padding: 18px 0;
+  }
+
+  .hint-list {
+    display: grid;
+    gap: 10px;
+    color: var(--text-soft);
+    font-size: 0.96rem;
+    line-height: 1.7;
+  }
+
+  .hint-list span {
+    display: block;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .hint-list span::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-3), var(--accent));
+    box-shadow: 0 0 12px rgba(255, 211, 110, 0.4);
+  }
+
+  .shaking {
+    animation: shakeBall 0.8s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  @keyframes shakeBall {
+    10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-2deg); }
+    20%, 80% { transform: translate3d(5px, 0, 0) rotate(2deg); }
+    30%, 50%, 70% { transform: translate3d(-9px, 0, 0) rotate(-4deg); }
+    40%, 60% { transform: translate3d(9px, 0, 0) rotate(4deg); }
+  }
+
+  @keyframes floatBall {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 920px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+
+    .oracle {
+      min-height: 520px;
+    }
+
+    .orbital-ring {
+      width: min(92vw, 430px);
+    }
+
+    .controls {
+      padding-top: 22px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .page {
+      width: min(100% - 20px, 1080px);
+      padding-top: 26px;
+      padding-bottom: 28px;
+    }
+
+    .hero {
+      margin-bottom: 22px;
+    }
+
+    .subtitle {
+      font-size: 0.96rem;
+    }
+
+    .panel {
+      border-radius: 24px;
+    }
+
+    .oracle {
+      min-height: 420px;
+      padding: 26px 12px;
+    }
+
+    .eight-ball {
+      width: min(86vw, 330px);
+    }
+
+    .number-badge {
+      top: 60px;
+      width: 82px;
+      height: 82px;
+      font-size: 2.8rem;
+    }
+
+    .answer-window {
+      width: 49%;
+      margin-top: 40px;
+      padding-top: 44px;
+    }
+
+    .controls {
+      padding: 22px 18px;
+      gap: 18px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Mystic Oracle · 命运低语中</div>
+      <h1>魔法八号球</h1>
+      <p class="subtitle">
+        把你的问题轻声交给黑曜石般的占卜球。它不保证真理，但很擅长给出一种足够神秘的答案。
+      </p>
+    </section>
+
+    <section class="layout">
+      <div class="panel oracle">
+        <div class="orbital-ring" aria-hidden="true"></div>
+        <div class="eight-ball" id="eightBall" aria-live="polite">
+          <div class="number-badge">8</div>
+          <div class="answer-window">
+            <div class="answer visible" id="answerText">静候你的提问</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div>
+          <h2 class="panel-title">向命运发问</h2>
+          <p class="panel-copy">
+            输入一个可以用“是 / 否 / 也许”回应的问题，然后点击按钮。按下 Enter 也能立刻摇动八号球。
+          </p>
+        </div>
+
+        <div>
+          <label class="field-label" for="questionInput">你的问题</label>
+          <textarea
+            id="questionInput"
+            class="question-box"
+            placeholder="例如：我今天适合开始一个新的项目吗？"
+            maxlength="120"
+          ></textarea>
+        </div>
+
+        <div class="action-row">
+          <button class="primary-btn" id="askButton" type="button">摇一摇八号球</button>
+          <button class="secondary-btn" id="randomQuestionButton" type="button">抽取示例问题</button>
+          <button class="secondary-btn" id="clearHistoryButton" type="button">清空占卜记录</button>
+        </div>
+
+        <div class="status-card">
+          <div class="status-label">Oracle Status</div>
+          <div class="status-text" id="statusText">水晶雾气安静流动，等待一个足够明确的问题。</div>
+        </div>
+
+        <div>
+          <div class="history-title">
+            <h3>最近的启示</h3>
+            <span class="status-label" id="historyCount">0 / 6</span>
+          </div>
+          <ul class="history" id="historyList">
+            <li class="history-empty">还没有记录，第一次提问会出现在这里。</li>
+          </ul>
+        </div>
+
+        <div class="hint-list">
+          <span>问题越具体，答案的仪式感通常越强。</span>
+          <span>占卜结果带有随机性，适合娱乐和灵感，不适合严肃决策。</span>
+          <span>支持键盘操作：在输入框中按 Enter 提问，按 Shift + Enter 换行。</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+  const responses = [
+    "毫无疑问",
+    "命运之线指向肯定",
+    "迹象非常明朗",
+    "答案正缓缓浮现为是",
+    "你可以放心继续",
+    "结果大概率如你所愿",
+    "现在看起来很有希望",
+    "星象支持你的计划",
+    "迷雾尚未散去",
+    "再等等会更清楚",
+    "答案藏在细节里",
+    "可能，但别急着下结论",
+    "这个问题仍需观察",
+    "现在还不能确定",
+    "不要过分依赖表象",
+    "迹象显示并不理想",
+    "此刻的答案偏向否定",
+    "最好换个方向尝试",
+    "黑雾提醒你谨慎行事",
+    "短时间内恐怕不会"
+  ];
+
+  const sampleQuestions = [
+    "我今天适合开始一个新计划吗？",
+    "我现在发出的消息会有好结果吗？",
+    "这个周末适合学习新技能吗？",
+    "我一直在想的点子值得继续做下去吗？",
+    "今晚适合早点休息而不是继续熬夜吗？",
+    "我接下来的选择会带来惊喜吗？"
+  ];
+
+  const historyLimit = 6;
+  const eightBall = document.getElementById("eightBall");
+  const questionInput = document.getElementById("questionInput");
+  const askButton = document.getElementById("askButton");
+  const randomQuestionButton = document.getElementById("randomQuestionButton");
+  const clearHistoryButton = document.getElementById("clearHistoryButton");
+  const answerText = document.getElementById("answerText");
+  const statusText = document.getElementById("statusText");
+  const historyList = document.getElementById("historyList");
+  const historyCount = document.getElementById("historyCount");
+
+  let historyRecords = [];
+  let isShaking = false;
+
+  function randomFrom(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function sanitizeQuestion(value) {
+    return value.replace(/\s+/g, " ").trim();
+  }
+
+  function setAnswer(text) {
+    answerText.classList.remove("visible");
+    window.setTimeout(() => {
+      answerText.textContent = text;
+      answerText.classList.add("visible");
+    }, 120);
+  }
+
+  function renderHistory() {
+    historyCount.textContent = historyRecords.length + " / " + historyLimit;
+    historyList.innerHTML = "";
+
+    if (historyRecords.length === 0) {
+      const emptyItem = document.createElement("li");
+      emptyItem.className = "history-empty";
+      emptyItem.textContent = "还没有记录，第一次提问会出现在这里。";
+      historyList.appendChild(emptyItem);
+      return;
+    }
+
+    historyRecords.forEach((item) => {
+      const listItem = document.createElement("li");
+      const question = document.createElement("div");
+      const answer = document.createElement("div");
+
+      listItem.className = "history-item";
+      question.className = "history-question";
+      answer.className = "history-answer";
+
+      question.textContent = "“" + item.question + "”";
+      answer.textContent = "启示：" + item.answer;
+
+      listItem.appendChild(question);
+      listItem.appendChild(answer);
+      historyList.appendChild(listItem);
+    });
+  }
+
+  function askOracle() {
+    if (isShaking) {
+      return;
+    }
+
+    const question = sanitizeQuestion(questionInput.value);
+    if (!question) {
+      statusText.textContent = "八号球需要一个真正的问题。先写下你的疑问，再来占卜。";
+      setAnswer("请先提问");
+      questionInput.focus();
+      return;
+    }
+
+    isShaking = true;
+    askButton.disabled = true;
+    askButton.style.opacity = "0.7";
+    eightBall.classList.add("shaking");
+    eightBall.classList.add("shake");
+    statusText.textContent = "黑曜石内部开始震动，命运正在重新排列符号...";
+    setAnswer("占卜中...");
+
+    window.setTimeout(() => {
+      const answer = randomFrom(responses);
+      setAnswer(answer);
+      statusText.textContent = "问题已被记录，新的启示已经显现。";
+      historyRecords.unshift({ question, answer });
+      historyRecords = historyRecords.slice(0, historyLimit);
+      renderHistory();
+
+      eightBall.classList.remove("shaking");
+      eightBall.classList.remove("shake");
+      askButton.disabled = false;
+      askButton.style.opacity = "1";
+      isShaking = false;
+    }, 950);
+  }
+
+  function useRandomQuestion() {
+    const sample = randomFrom(sampleQuestions);
+    questionInput.value = sample;
+    questionInput.focus();
+    statusText.textContent = "示例问题已浮现，你可以直接占卜，或继续修改它。";
+  }
+
+  function clearHistory() {
+    historyRecords = [];
+    renderHistory();
+    statusText.textContent = "占卜记录已经散入夜色，新的问题会重新点亮命运之窗。";
+    setAnswer("静候你的提问");
+  }
+
+  askButton.addEventListener("click", askOracle);
+  randomQuestionButton.addEventListener("click", useRandomQuestion);
+  clearHistoryButton.addEventListener("click", clearHistory);
+
+  questionInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      askOracle();
+    }
+  });
+
+  renderHistory();
+</script>
+</body>
+</html>
