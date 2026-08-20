@@ -89,6 +89,7 @@
 
         .category-btn {
             transition: all 0.3s ease;
+            min-height: 44px;
         }
 
         .category-btn.active {
@@ -100,6 +101,21 @@
             background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.2);
             transition: all 0.3s ease;
+            min-height: 44px;
+        }
+
+        button { min-height: 44px; }
+
+        button:focus-visible, input:focus-visible {
+            outline: 3px solid #67e8f9;
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 640px) {
+            header .max-w-7xl { align-items: stretch; flex-direction: column; }
+            header .flex.items-center.gap-4 { width: 100%; }
+            #searchInput { width: 100%; }
+            header .relative { flex: 1; }
         }
 
         .search-input:focus {
