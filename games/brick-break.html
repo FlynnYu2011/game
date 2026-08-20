@@ -11,7 +11,7 @@
 .overlay{position:absolute;inset:0;display:grid;place-items:center;background:#050714dd;padding:22px}.hidden{display:none!important}.card{width:min(720px,96%);padding:30px;text-align:center;background:#111633;border:5px solid #5965a0;box-shadow:inset 0 0 0 3px #252d59,9px 9px #02030a}.logo{font-family:'Press Start 2P';font-size:clamp(25px,5vw,48px);line-height:1.4;color:#ffdb64;text-shadow:4px 4px #d6497a,7px 7px #17112d;margin:0}.sub{letter-spacing:7px;color:#84dff1;margin:10px 0 24px}.how{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0;text-align:left}.how div{background:#1b2245;border-left:4px solid #6de4de;padding:12px}.how b{color:#ffd468}.btn{border:0;min-height:52px;padding:12px 24px;margin:8px;cursor:pointer;font-family:'Press Start 2P';font-size:11px;color:#181020;background:#ffd15c;box-shadow:inset -4px -4px #b66a33,inset 4px 4px #fff0a4,5px 5px #03040c}.btn:hover{transform:translate(-2px,-2px);box-shadow:inset -4px -4px #b66a33,inset 4px 4px #fff0a4,7px 7px #03040c}.btn:active{transform:translate(3px,3px);box-shadow:none}
 #touch{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}.touchGroup{display:flex;gap:10px}.touchBtn{pointer-events:auto;width:72px;height:58px;border:2px solid #78dce8;background:#111937cc;color:#fff;font-size:25px;border-radius:10px;touch-action:none}.touchBtn.active{background:#ec5e93;transform:translateY(3px)}
 .scan{position:absolute;inset:0;pointer-events:none;opacity:.13;background:repeating-linear-gradient(0deg,transparent 0 3px,#000 4px)}
-@media(pointer:fine){#touch{display:none}}@media(max-width:600px){.how{grid-template-columns:1fr}.card{padding:18px}.hudBox{min-width:135px;padding:7px}.value{font-size:11px}.status{top:92px}.sub{letter-spacing:3px}}
+@media(pointer:fine){#touch .touchGroup{display:none}}@media(max-width:600px){.how{grid-template-columns:1fr}.card{padding:18px}.hudBox{min-width:135px;padding:7px}.value{font-size:11px}.status{top:92px}.sub{letter-spacing:3px}}
 </style>
 </head>
 <body>
@@ -30,7 +30,7 @@ const keys={left:false,right:false,launch:false};
 const bumpers=[{x:350,y:175,r:34,c:'#ff5f87',v:800},{x:520,y:145,r:31,c:'#61e5df',v:1000},{x:675,y:215,r:35,c:'#ffbd59',v:820},{x:455,y:300,r:28,c:'#a879ff',v:680},{x:610,y:340,r:25,c:'#58b7ff',v:720},{x:320,y:400,r:23,c:'#ff7bd1',v:700}],targets=[{x:250,y:250,w:18,h:58,on:false},{x:755,y:300,w:18,h:58,on:false},{x:390,y:365,w:18,h:54,on:false},{x:690,y:415,w:18,h:54,on:false},{x:535,y:420,w:18,h:52,on:false},{x:210,y:345,w:18,h:52,on:false}];
 const walls=[
  [120,80,840,80],[120,80,80,145],[80,145,80,530],[80,530,220,630],[880,80,880,620],[220,630,345,675],[655,675,790,630],[790,630,820,585],
- [160,165,245,112],[245,112,305,125],[840,170,765,115],[765,115,710,132],[150,440,235,505],[805,440,750,505],[820,120,820,595],[115,300,175,330],[885,285,825,320],[390,500,455,520],[610,500,545,520]
+ [160,165,245,112],[245,112,305,125],[805,170,730,115],[730,115,690,132],[150,440,235,505],[805,440,750,505],[820,120,820,595],[115,300,175,330],[805,285,745,320],[390,500,455,520],[610,500,545,520]
 ];
 const flippers=[{x:335,y:585,len:145,base:.18,up:-.62,a:.18,key:'left',side:1},{x:665,y:585,len:145,base:Math.PI-.18,up:Math.PI+.62,a:Math.PI-.18,key:'right',side:-1}];
 function resize(){let r=$('#gameWrap').getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1);C.width=r.width*d;C.height=r.height*d;C._sx=r.width/1000;C._sy=r.height/700;C._d=d}addEventListener('resize',resize);resize();
