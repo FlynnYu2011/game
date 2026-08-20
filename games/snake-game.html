@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -81,6 +81,12 @@
             }
         }
     </style>
+    <style>
+        .snake-dpad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,48px);gap:6px;justify-content:center;margin:2px auto 8px}
+        .snake-dpad button{min-width:54px;min-height:48px;border:2px solid rgba(129,140,248,.7);border-radius:12px;background:#1e293bcc;color:white;font-size:22px;box-shadow:0 3px 0 #111827;touch-action:manipulation}
+        .snake-dpad button:active{transform:translateY(3px);box-shadow:none;background:#4f46e5}.snake-up{grid-column:2}.snake-left{grid-column:1;grid-row:2}.snake-down{grid-column:2;grid-row:2}.snake-right{grid-column:3;grid-row:2}
+        @media(pointer:fine) and (min-width:700px){.snake-dpad{display:none}}
+    </style>
 </head>
 <body class="bg-game-gradient font-game text-light min-h-screen flex flex-col items-center justify-start p-4 overflow-hidden pt-4">
     <div class="max-w-3xl w-full flex flex-col h-[calc(100vh-2rem)]">
@@ -93,7 +99,7 @@
         </header>
         
         <div class="relative bg-dark-accent/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border-2 border-transparent border-gradient flex-grow mb-4 transition-all duration-500 hover:shadow-primary/10">
-            <canvas id="gameCanvas" class="w-full h-full grid-bg"></canvas>
+            <canvas id="gameCanvas" tabindex="0" aria-label="进阶版贪吃蛇游戏画面" class="w-full h-full grid-bg"></canvas>
             
             <div id="gameOver" class="absolute inset-0 bg-dark/70 backdrop-blur-md flex flex-col items-center justify-center hidden animate-fade-in">
                 <h2 class="text-[clamp(2rem,6vw,3.5rem)] font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500 text-shadow">游戏结束!</h2>
@@ -103,14 +109,21 @@
                 </button>
             </div>
         </div>
+
+        <div class="snake-dpad" aria-label="贪吃蛇方向控制">
+            <button class="snake-up" data-direction="up" aria-label="向上">▲</button>
+            <button class="snake-left" data-direction="left" aria-label="向左">◀</button>
+            <button class="snake-down" data-direction="down" aria-label="向下">▼</button>
+            <button class="snake-right" data-direction="right" aria-label="向右">▶</button>
+        </div>
         
         <div class="mt-2 text-center text-white/60 text-sm flex-shrink-0">
-            <p class="flex flex-wrap justify-center items-center gap-x-1">使用方向键 
+            <p class="flex flex-wrap justify-center items-center gap-x-1">使用方向键或 WASD
                 <i class="fa fa-arrow-up mx-1"></i> 
                 <i class="fa fa-arrow-down mx-1"></i> 
                 <i class="fa fa-arrow-left mx-1"></i> 
                 <i class="fa fa-arrow-right mx-1"></i> 
-                控制蛇的移动
+                控制移动；手机可滑动或点击方向键
             </p>
             <p class="mt-1">每吃一个食物，蛇的速度会增加，颜色也会变化</p>
         </div>
@@ -142,6 +155,7 @@
             let food = {};
             let direction = 'right';
             let nextDirection = 'right';
+            let directionQueue = [];
             let score = 0;
             let gameSpeed = 150;
             let gameInterval;
@@ -170,6 +184,7 @@
                 ];
                 direction = 'right';
                 nextDirection = 'right';
+                directionQueue = [];
                 score = 0;
                 gameSpeed = 150;
                 isGameOver = false;
@@ -432,7 +447,8 @@
             function gameLoop() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                direction = nextDirection;
+                if (directionQueue.length) direction = directionQueue.shift();
+                nextDirection = direction;
                 
                 const head = {x: snake[0].x, y: snake[0].y};
                 
@@ -491,46 +507,40 @@
                 gameOverScreen.classList.remove('hidden');
             }
             
-            // 键盘控制
+            function queueDirection(wanted) {
+                const opposite = {up:'down', down:'up', left:'right', right:'left'};
+                const base = directionQueue.length ? directionQueue[directionQueue.length - 1] : direction;
+                if (wanted !== base && wanted !== opposite[base] && directionQueue.length < 2) {
+                    directionQueue.push(wanted);
+                    nextDirection = wanted;
+                }
+            }
+
+            // 键盘控制（方向键与 WASD，支持连续转向缓冲）
             document.addEventListener('keydown', (e) => {
                 if (isGameOver && e.key === ' ') {
                     initGame();
                     return;
                 }
                 
-                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D', ' '].includes(e.key)) {
                     e.preventDefault();
                 }
-                
-                switch(e.key) {
-                    case 'ArrowUp':
-                        if (direction !== 'down') {
-                            nextDirection = 'up';
-                        }
-                        break;
-                    case 'ArrowDown':
-                        if (direction !== 'up') {
-                            nextDirection = 'down';
-                        }
-                        break;
-                    case 'ArrowLeft':
-                        if (direction !== 'right') {
-                            nextDirection = 'left';
-                        }
-                        break;
-                    case 'ArrowRight':
-                        if (direction !== 'left') {
-                            nextDirection = 'right';
-                        }
-                        break;
-                }
+                const map = {ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};
+                if (map[e.key]) queueDirection(map[e.key]);
+            });
+
+            document.querySelectorAll('[data-direction]').forEach(button => {
+                button.addEventListener('pointerdown', e => { e.preventDefault(); queueDirection(button.dataset.direction); });
             });
             
             // 触摸控制
             let touchStartX = 0;
             let touchStartY = 0;
+            canvas.addEventListener('pointerdown', () => canvas.focus());
             
             canvas.addEventListener('touchstart', (e) => {
+                canvas.focus();
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
                 e.preventDefault();
@@ -550,17 +560,11 @@
                 const diffY = touchEndY - touchStartY;
                 
                 if (Math.abs(diffX) > Math.abs(diffY)) {
-                    if (diffX > 0 && direction !== 'left') {
-                        nextDirection = 'right';
-                    } else if (diffX < 0 && direction !== 'right') {
-                        nextDirection = 'left';
-                    }
+                    if (diffX > 0) queueDirection('right');
+                    else if (diffX < 0) queueDirection('left');
                 } else {
-                    if (diffY > 0 && direction !== 'up') {
-                        nextDirection = 'down';
-                    } else if (diffY < 0 && direction !== 'down') {
-                        nextDirection = 'up';
-                    }
+                    if (diffY > 0) queueDirection('down');
+                    else if (diffY < 0) queueDirection('up');
                 }
                 
                 touchStartX = 0;
